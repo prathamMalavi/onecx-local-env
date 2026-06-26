@@ -1,0 +1,15 @@
+{
+  "appVersion": "xxx",
+  "appName": "onecx-angular-21-module-test",
+  "description": "OneCX Angular 21 Module Test",
+  "remoteBaseUrl": "/mfe/onecx-angular-21-module-test/",
+  "remoteEntry": "/mfe/onecx-angular-21-module-test/remoteEntry.js",
+  "note": "OneCX Angular 21 Module Test auto import via MF operator",
+  "exposedModule": "./RemoteModule",
+  "technology": "WEBCOMPONENTMODULE",
+  "remoteName": "onecx-angular-21-module-test",
+  "tagName": "ocx-test-component-21",
+  "type": "MODULE",
+  "deprecated": false,
+  "undeployed": false
+}

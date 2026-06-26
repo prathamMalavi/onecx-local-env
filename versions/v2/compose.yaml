@@ -209,7 +209,7 @@ services:
       - RUSTFS_ACCESS_KEY=rustfsadmin
       - RUSTFS_SECRET_KEY=rustfsadmin
       - RUSTFS_OBS_LOGGER_LEVEL=info
-      - RUSTFS_TLS_PATH=/opt/tls
+      # - RUSTFS_TLS_PATH=/opt/tls  # Disabled: no certs present in local dev
       - RUSTFS_OBS_ENDPOINT=http://otel-collector:4318
       - RUSTFS_REGION=eu-central-1
       - RUSTFS_UNSAFE_BYPASS_DISK_CHECK=true

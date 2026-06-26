@@ -9,3 +9,11 @@ init-data/traefik/active/*
 api-key*
 /versions/v2/storage
 /versions/v2/logs
+
+
+# Personal files
+.Ps-Docs
+0_temp
+A_Extras
+.0_agents-deployer/
+.github/

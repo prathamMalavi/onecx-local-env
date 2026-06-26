@@ -1,0 +1,34 @@
+{
+  "id": "onecx-local-env-import-assignments-onecx-angular-21-generator-app",
+  "assignments": {
+    "onecx-angular-21-generator-app": {
+      "test-project": {
+        "onecx-admin": {
+          "TEST_RESOURCE": [
+            "CREATE",
+            "EDIT",
+            "DELETE",
+            "SEARCH",
+            "VIEW",
+            "IMPORT",
+            "EXPORT",
+            "BACK"
+          ],
+          "TEST": [
+            "VIEW"
+          ],
+          "CUSTOM_DATA_OBJECT": [
+            "CREATE",
+            "EDIT",
+            "DELETE",
+            "SEARCH",
+            "VIEW",
+            "IMPORT",
+            "EXPORT",
+            "BACK"
+          ]
+        }
+      }
+    }
+  }
+}

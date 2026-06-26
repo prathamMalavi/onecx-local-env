@@ -5,3 +5,9 @@ This repository contains the source code and documentation for the OneCX Local E
 `onecx-local-env` uses Docker and Docker Compose to enable developers to quickly run local instances of OneCX Services.
 
 For more information on `onecx-local-env`, please refer to the [documentation](https://onecx.github.io/docs/documentation/current/onecx-local-env/index.html).
+
+
+```bash
+
+
+```

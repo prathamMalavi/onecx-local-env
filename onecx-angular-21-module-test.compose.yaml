@@ -1,0 +1,20 @@
+include:
+  - compose.yaml
+services:
+  onecx-angular-21-module-test-ui:
+    image: ${ONECX_ANGULAR_21_MODULE_TEST_UI}
+    container_name: onecx-angular-21-module-test-ui
+    environment:
+      APP_BASE_HREF: /mfe/onecx-angular-21-module-test-ui/
+      APP_ID: onecx-angular-21-module-test-ui
+      PRODUCT_NAME: onecx-angular-21-module-test
+    depends_on:
+      onecx-angular-21-module-test-bff:
+        condition: service_healthy
+    labels:
+      - traefik.http.services.onecx-angular-21-module-test-ui.loadbalancer.server.port=8080
+      - traefik.http.routers.onecx-angular-21-module-test-ui.rule=Host(`onecx.localhost`) && PathPrefix(`/mfe/onecx-angular-21-module-test-ui/`)
+    networks:
+      - onecx
+    profiles:
+      - all

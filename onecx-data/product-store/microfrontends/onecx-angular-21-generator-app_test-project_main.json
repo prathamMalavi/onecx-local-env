@@ -1,0 +1,15 @@
+{
+  "appVersion": "xxx",
+  "appName": "test-project",
+  "description": "OneCX TestProject UI",
+  "remoteBaseUrl": "http://localhost:4200/",
+  "remoteEntry": "http://localhost:4200/remoteEntry.js",
+  "note": "OneCX TestProject UI module auto import via MF operator",
+  "exposedModule": "./OneCXTestProjectModule",
+  "technology": "WEBCOMPONENTMODULE",
+  "remoteName": "test-project",
+  "tagName": "ocx-test-project-component",
+  "type": "MODULE",
+  "deprecated": false,
+  "undeployed": false
+}

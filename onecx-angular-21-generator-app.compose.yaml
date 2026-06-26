@@ -1,0 +1,20 @@
+include:
+  - compose.yaml
+services:
+  onecx-angular-21-generator-app-ui:
+    image: ${ONECX_ANGULAR_21_GENERATOR_APP_UI}
+    container_name: onecx-angular-21-generator-app-ui
+    environment:
+      APP_BASE_HREF: /mfe/onecx-test-project-ui/
+      APP_ID: onecx-angular-21-generator-app-ui
+      PRODUCT_NAME: onecx-angular-21-generator-app
+    depends_on:
+      onecx-angular-21-generator-app-bff:
+        condition: service_healthy
+    labels:
+      - traefik.http.services.onecx-angular-21-generator-app-ui.loadbalancer.server.port=8080
+      - traefik.http.routers.onecx-angular-21-generator-app-ui.rule=Host(`onecx.localhost`) && PathPrefix(`/mfe/onecx-test-project-ui/`)
+    networks:
+      - onecx
+    profiles:
+      - all

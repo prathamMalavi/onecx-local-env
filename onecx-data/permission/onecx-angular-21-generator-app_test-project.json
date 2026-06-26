@@ -1,0 +1,73 @@
+{
+  "name": "test-project",
+  "permissions": [
+    {
+      "resource": "TEST_RESOURCE",
+      "action": "CREATE"
+    },
+    {
+      "resource": "TEST_RESOURCE",
+      "action": "EDIT"
+    },
+    {
+      "resource": "TEST_RESOURCE",
+      "action": "DELETE"
+    },
+    {
+      "resource": "TEST_RESOURCE",
+      "action": "SEARCH"
+    },
+    {
+      "resource": "TEST_RESOURCE",
+      "action": "VIEW"
+    },
+    {
+      "resource": "TEST_RESOURCE",
+      "action": "IMPORT"
+    },
+    {
+      "resource": "TEST_RESOURCE",
+      "action": "EXPORT"
+    },
+    {
+      "resource": "TEST_RESOURCE",
+      "action": "BACK"
+    },
+    {
+      "resource": "TEST",
+      "action": "VIEW"
+    },
+    {
+      "resource": "CUSTOM_DATA_OBJECT",
+      "action": "CREATE"
+    },
+    {
+      "resource": "CUSTOM_DATA_OBJECT",
+      "action": "EDIT"
+    },
+    {
+      "resource": "CUSTOM_DATA_OBJECT",
+      "action": "DELETE"
+    },
+    {
+      "resource": "CUSTOM_DATA_OBJECT",
+      "action": "SEARCH"
+    },
+    {
+      "resource": "CUSTOM_DATA_OBJECT",
+      "action": "VIEW"
+    },
+    {
+      "resource": "CUSTOM_DATA_OBJECT",
+      "action": "IMPORT"
+    },
+    {
+      "resource": "CUSTOM_DATA_OBJECT",
+      "action": "EXPORT"
+    },
+    {
+      "resource": "CUSTOM_DATA_OBJECT",
+      "action": "BACK"
+    }
+  ]
+}

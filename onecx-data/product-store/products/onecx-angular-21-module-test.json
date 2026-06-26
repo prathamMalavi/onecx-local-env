@@ -1,0 +1,10 @@
+{
+  "version": "xxx",
+  "description": "onecx angular 21 module test",
+  "imageUrl": "",
+  "iconName": "pi-briefcase",
+  "displayName": "onecx angular 21 module test",
+  "basePath": "/onecx-angular-21-module-test",
+  "multitenancy": true,
+  "undeployed": false
+}

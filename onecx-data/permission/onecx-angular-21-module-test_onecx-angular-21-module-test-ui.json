@@ -1,0 +1,33 @@
+{
+  "name": "onecx-angular-21-module-test-ui",
+  "permissions": [
+    {
+      "resource": "TEST",
+      "action": "SEARCH"
+    },
+    {
+      "resource": "TEST",
+      "action": "DETAIL"
+    },
+    {
+      "resource": "TEST",
+      "action": "EDIT"
+    },
+    {
+      "resource": "TEST",
+      "action": "DELETE"
+    },
+    {
+      "resource": "TEST",
+      "action": "BACK"
+    },
+    {
+      "resource": "TEST",
+      "action": "DIALOG"
+    },
+    {
+      "resource": "TEST",
+      "action": "VIEW_TESTS"
+    }
+  ]
+}

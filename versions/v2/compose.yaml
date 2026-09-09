@@ -87,9 +87,9 @@ services:
       - onecx
     profiles:
       - all
-      - ht
       - base
       - data-import
+      - ht
 
   postgresdb:
     image: ${POSTGRES}
@@ -119,9 +119,9 @@ services:
       - onecx
     profiles:
       - all
-      - ht
       - base
       - data-import
+      - ht
 
   keycloak-app:
     image: ${KEYCLOAK}
@@ -163,9 +163,9 @@ services:
       - onecx
     profiles:
       - all
-      - ht
       - base
       - data-import
+      - ht
 
   pgadmin:
     image: ${PGADMIN}
@@ -536,8 +536,8 @@ services:
       - onecx
     profiles:
       - all
-      - ht
       - data-import
+      - ht
 
   onecx-bookmark-bff:
     image: ${ONECX_BOOKMARK_BFF}
@@ -986,9 +986,9 @@ services:
       - onecx
     profiles:
       - all
-      - ht
       - base
       - data-import
+      - ht
 
   onecx-parameter-bff:
     image: ${ONECX_PARAMETER_BFF}
@@ -1068,9 +1068,9 @@ services:
       - onecx
     profiles:
       - all
-      - ht
       - base
       - data-import
+      - ht
 
   onecx-permission-bff:
     image: ${ONECX_PERMISSION_BFF}
@@ -1149,9 +1149,9 @@ services:
       - onecx
     profiles:
       - all
-      - ht
       - base
       - data-import
+      - ht
 
   onecx-product-store-bff:
     image: ${ONECX_PRODUCT_STORE_BFF}
@@ -1242,8 +1242,8 @@ services:
       - onecx
     profiles:
       - all
-      - ht
       - base
+      - ht
 
   onecx-shell-ui:
     image: ${ONECX_SHELL_UI}
@@ -1273,8 +1273,8 @@ services:
       - onecx
     profiles:
       - all
-      - ht
       - base
+      - ht
 
   ########## ONECX TENANT
   onecx-tenant-svc:
@@ -1305,9 +1305,9 @@ services:
       - onecx
     profiles:
       - all
-      - ht
       - base
       - data-import
+      - ht
 
   onecx-tenant-bff:
     image: ${ONECX_TENANT_BFF}
@@ -1386,9 +1386,9 @@ services:
       - onecx
     profiles:
       - all
-      - ht
       - base
       - data-import
+      - ht
 
   onecx-theme-bff:
     image: ${ONECX_THEME_BFF}
@@ -1498,8 +1498,8 @@ services:
       - onecx
     profiles:
       - all
-      - ht
       - base
+      - ht
 
   onecx-user-profile-bff:
     image: ${ONECX_USER_PROFILE_BFF}
@@ -1529,8 +1529,8 @@ services:
       - onecx
     profiles:
       - all
-      - ht
       - base
+      - ht
 
   onecx-user-profile-ui:
     image: ${ONECX_USER_PROFILE_UI}
@@ -1555,8 +1555,8 @@ services:
       - onecx
     profiles:
       - all
-      - ht
       - base
+      - ht
 
   ########## ONECX WELCOME
   onecx-welcome-svc:
@@ -1588,8 +1588,8 @@ services:
       - onecx
     profiles:
       - all
-      - ht
       - data-import
+      - ht
 
   onecx-welcome-bff:
     image: ${ONECX_WELCOME_BFF}
@@ -1669,9 +1669,9 @@ services:
       - onecx
     profiles:
       - all
-      - ht
       - base
       - data-import
+      - ht
 
   onecx-workspace-bff:
     image: ${ONECX_WORKSPACE_BFF}
@@ -1699,8 +1699,8 @@ services:
       - onecx
     profiles:
       - all
-      - ht
       - base
+      - ht
 
   onecx-workspace-ui:
     image: ${ONECX_WORKSPACE_UI}
@@ -1725,8 +1725,8 @@ services:
       - onecx
     profiles:
       - all
-      - ht
       - base
+      - ht
 
   ########## ONECX NOTIFICATION
   onecx-notification-svc:

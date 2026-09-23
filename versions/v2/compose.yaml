@@ -18,6 +18,11 @@ volumes:
       - "com.docker.compose.project=onecx-local-env"
       - "com.docker.compose.description=Postgres database administration"
       - "com.docker.compose.volume=pgAdmin"
+  n8n:
+    name: onecx-local-env_n8n
+    labels:
+      - "onecx-local-env.volume=n8n"
+
 networks:
   onecx:
     name: onecx-local-env_onecx
@@ -84,6 +89,7 @@ services:
       - all
       - base
       - data-import
+      - ht
 
   postgresdb:
     image: ${POSTGRES}
@@ -115,6 +121,7 @@ services:
       - all
       - base
       - data-import
+      - ht
 
   keycloak-app:
     image: ${KEYCLOAK}
@@ -158,6 +165,7 @@ services:
       - all
       - base
       - data-import
+      - ht
 
   pgadmin:
     image: ${PGADMIN}
@@ -184,6 +192,7 @@ services:
       - onecx
     profiles:
       - all
+      - ht
 
   # RustFS main service
   rustfs:
@@ -216,7 +225,6 @@ services:
     volumes:
       - ./storage/data/pro:/data
       - ./storage/logs:/app/logs
-      - ./storage/data/certs/:/opt/tls # TLS configuration, you should create tls directory and put your tls files in it and then specify the path here
     labels:
       - "traefik.http.services.rustfs.loadbalancer.server.port=80"
       - "traefik.http.routers.rustfs.rule=Host(`rustfs`)"
@@ -243,6 +251,7 @@ services:
       start_period: 40s
     profiles:
       - all
+      - ht
 
   # Init container to create default S3 buckets in RustFS if they don't exist yet
   rustfs-init:
@@ -260,6 +269,36 @@ services:
       - onecx
     profiles:
       - all
+      - ht
+
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    container_name: n8n
+    environment:
+      GENERIC_TIMEZONE: "Europe/Berlin"
+      TZ: "Europe/Berlin"
+      N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: "true"
+      N8N_RUNNERS_ENABLED: true
+      QUEUE_HEALTH_CHECK_ACTIVE: true
+      WEBHOOK_URL: "http://n8n:5678"
+    volumes:
+      - n8n:/home/node/.n8n
+    ports:
+      - "5678:5678"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5678/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    labels:
+      - "traefik.http.services.n8n.loadbalancer.server.port=5678"
+      - "traefik.http.routers.n8n.rule=Host(`n8n`)"
+      - "traefik.http.routers.n8n.entrypoints=web"
+    networks:
+      - onecx
+    profiles:
+      - ht
 
   ########################################
   ########### OneCX Products #############
@@ -274,13 +313,6 @@ services:
       QUARKUS_DATASOURCE_USERNAME: onecx_ai_provider
       QUARKUS_DATASOURCE_PASSWORD: onecx_ai_provider
       QUARKUS_DATASOURCE_JDBC_URL: jdbc:postgresql://postgresdb:5432/onecx_ai_provider?sslmode=disable
-    entrypoint: ["/work/application"]
-    command:
-      - "-Djavax.net.ssl.trustStore=/opt/certs/truststore.jks"
-      - "-Djavax.net.ssl.trustStorePassword=trustjava"
-      - "-Djavax.net.ssl.trustStoreType=JKS"
-    volumes:
-      - ../../certs/truststore.jks:/opt/certs/truststore.jks:ro
     healthcheck:
       test:
         [
@@ -293,6 +325,8 @@ services:
     depends_on:
       keycloak-app:
         condition: service_healthy
+      onecx-ai-provider-runtime:
+        condition: service_healthy
     labels:
       - "traefik.http.services.onecx-ai-provider-svc.loadbalancer.server.port=8080"
       - "traefik.http.routers.onecx-ai-provider-svc.rule=Host(`onecx-ai-provider-svc`)"
@@ -301,6 +335,7 @@ services:
       - onecx
     profiles:
       - all
+      - ht
 
   onecx-ai-provider-bff:
     image: ${ONECX_AI_PROVIDER_BFF}
@@ -328,6 +363,7 @@ services:
       - onecx
     profiles:
       - all
+      - ht
 
   onecx-ai-provider-ui:
     image: ${ONECX_AI_PROVIDER_UI}
@@ -352,6 +388,42 @@ services:
       - onecx
     profiles:
       - all
+      - ht
+
+  onecx-ai-provider-runtime:
+    image: ${ONECX_AI_PROVIDER_RUNTIME}
+    container_name: onecx-ai-provider-runtime
+    environment:
+      <<: *bff_environment
+      ONECX_PERMISSIONS_PRODUCT_NAME: "onecx-ai-provider"
+    entrypoint: ["/work/application"]
+    command:
+      - "-Djavax.net.ssl.trustStore=/opt/certs/truststore.jks"
+      - "-Djavax.net.ssl.trustStorePassword=trustjava"
+      - "-Djavax.net.ssl.trustStoreType=JKS"
+    volumes:
+      - ../../certs/truststore.jks:/opt/certs/truststore.jks:ro
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "bash -c 'exec 3<>/dev/tcp/localhost/8080 && printf \"GET /q/health HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n\" >&3 && read line <&3 && case \"$$line\" in *200*) exit 0;; *) exit 1;; esac'",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      keycloak-app:
+        condition: service_healthy
+    labels:
+      - "traefik.http.services.onecx-ai-provider-runtime.loadbalancer.server.port=8080"
+      - "traefik.http.routers.onecx-ai-provider-runtime.rule=Host(`onecx-ai-provider-runtime`)"
+      - "traefik.http.routers.onecx-ai-provider-runtime.entrypoints=web"
+    networks:
+      - onecx
+    profiles:
+      - all
+      - ht
 
   ########## ONECX ANNOUNCEMENT
   onecx-announcement-svc:
@@ -382,6 +454,7 @@ services:
       - onecx
     profiles:
       - all
+      - ht
 
   onecx-announcement-bff:
     image: ${ONECX_ANNOUNCEMENT_BFF}
@@ -409,6 +482,7 @@ services:
       - onecx
     profiles:
       - all
+      - ht
 
   onecx-announcement-ui:
     image: ${ONECX_ANNOUNCEMENT_UI}
@@ -428,6 +502,7 @@ services:
       - onecx
     profiles:
       - all
+      - ht
 
   ########## ONECX BOOKMARK
   onecx-bookmark-svc:
@@ -463,6 +538,7 @@ services:
     profiles:
       - all
       - data-import
+      - ht
 
   onecx-bookmark-bff:
     image: ${ONECX_BOOKMARK_BFF}
@@ -490,6 +566,7 @@ services:
       - onecx
     profiles:
       - all
+      - ht
 
   onecx-bookmark-ui:
     image: ${ONECX_BOOKMARK_UI}
@@ -509,6 +586,7 @@ services:
       - onecx
     profiles:
       - all
+      - ht
 
   ########## ONECX CHAT
   onecx-chat-svc:
@@ -539,6 +617,7 @@ services:
       - onecx
     profiles:
       - all
+      - ht
 
   onecx-chat-bff:
     image: ${ONECX_CHAT_BFF}
@@ -566,6 +645,7 @@ services:
       - onecx
     profiles:
       - all
+      - ht
 
   onecx-chat-ui:
     image: ${ONECX_CHAT_UI}
@@ -585,6 +665,7 @@ services:
       - onecx
     profiles:
       - all
+      - ht
 
   ########## ONECX DOCUMENT
   onecx-document-svc:
@@ -615,6 +696,7 @@ services:
       - onecx
     profiles:
       - all
+      - ht
 
   onecx-document-bff:
     image: ${ONECX_DOCUMENT_BFF}
@@ -644,13 +726,14 @@ services:
       - onecx
     profiles:
       - all
+      - ht
 
   onecx-document-ui:
     image: ${ONECX_DOCUMENT_UI}
     container_name: onecx-document-ui
     environment:
-      APP_BASE_HREF: "/mfe/document/"
-      APP_ID: "onecx-document-ui"
+      APP_BASE_HREF: /mfe/document/
+      APP_ID: onecx-document-ui
       PRODUCT_NAME: "onecx-document"
     depends_on:
       onecx-document-bff:
@@ -663,6 +746,7 @@ services:
       - onecx
     profiles:
       - all
+      - ht
 
   ########## ONECX FILE STORAGE
   onecx-file-storage-svc:
@@ -699,6 +783,7 @@ services:
       - onecx
     profiles:
       - all
+      - ht
 
   ########## ONECX HELP
   onecx-help-svc:
@@ -731,6 +816,7 @@ services:
       - onecx
     profiles:
       - all
+      - ht
 
   onecx-help-bff:
     image: ${ONECX_HELP_BFF}
@@ -758,6 +844,7 @@ services:
       - onecx
     profiles:
       - all
+      - ht
 
   onecx-help-ui:
     image: ${ONECX_HELP_UI}
@@ -777,6 +864,7 @@ services:
       - onecx
     profiles:
       - all
+      - ht
 
   ########## ONECX IAM
   onecx-iam-svc:
@@ -820,6 +908,7 @@ services:
       - onecx
     profiles:
       - all
+      - ht
 
   onecx-iam-bff:
     image: ${ONECX_IAM_BFF}
@@ -847,6 +936,7 @@ services:
       - onecx
     profiles:
       - all
+      - ht
 
   onecx-iam-ui:
     image: ${ONECX_IAM_UI}
@@ -866,6 +956,7 @@ services:
       - onecx
     profiles:
       - all
+      - ht
 
   ########## ONECX PARAMETER
   onecx-parameter-svc:
@@ -898,6 +989,7 @@ services:
       - all
       - base
       - data-import
+      - ht
 
   onecx-parameter-bff:
     image: ${ONECX_PARAMETER_BFF}
@@ -925,6 +1017,7 @@ services:
       - onecx
     profiles:
       - all
+      - ht
 
   onecx-parameter-ui:
     image: ${ONECX_PARAMETER_UI}
@@ -944,6 +1037,7 @@ services:
       - onecx
     profiles:
       - all
+      - ht
 
   ########## ONECX PERMISSION
   onecx-permission-svc:
@@ -977,6 +1071,7 @@ services:
       - all
       - base
       - data-import
+      - ht
 
   onecx-permission-bff:
     image: ${ONECX_PERMISSION_BFF}
@@ -1004,6 +1099,7 @@ services:
       - onecx
     profiles:
       - all
+      - ht
 
   onecx-permission-ui:
     image: ${ONECX_PERMISSION_UI}
@@ -1023,6 +1119,7 @@ services:
       - onecx
     profiles:
       - all
+      - ht
 
   ########## ONECX PRODUCT-STORE
   onecx-product-store-svc:
@@ -1055,6 +1152,7 @@ services:
       - all
       - base
       - data-import
+      - ht
 
   onecx-product-store-bff:
     image: ${ONECX_PRODUCT_STORE_BFF}
@@ -1082,6 +1180,7 @@ services:
       - onecx
     profiles:
       - all
+      - ht
 
   onecx-product-store-ui:
     image: ${ONECX_PRODUCT_STORE_UI}
@@ -1101,6 +1200,7 @@ services:
       - onecx
     profiles:
       - all
+      - ht
 
   ########## ONECX SHELL
   onecx-shell-bff:
@@ -1144,6 +1244,7 @@ services:
     profiles:
       - all
       - base
+      - ht
 
   onecx-shell-ui:
     image: ${ONECX_SHELL_UI}
@@ -1156,6 +1257,7 @@ services:
       KEYCLOAK_URL: ${KC_URL}
       KEYCLOAK_REALM: ${KC_REALM}
       KEYCLOAK_CLIENT_ID: ${KC_CLIENT_ID}
+      SOURCE_MAPS_ACCESS_RULE: "allow all;"
     healthcheck:
       test: ["CMD", "curl", "--fail", "-G", "http://localhost:8080"]
       interval: 10s
@@ -1173,6 +1275,7 @@ services:
     profiles:
       - all
       - base
+      - ht
 
   ########## ONECX TENANT
   onecx-tenant-svc:
@@ -1205,6 +1308,7 @@ services:
       - all
       - base
       - data-import
+      - ht
 
   onecx-tenant-bff:
     image: ${ONECX_TENANT_BFF}
@@ -1232,6 +1336,7 @@ services:
       - onecx
     profiles:
       - all
+      - ht
 
   onecx-tenant-ui:
     image: ${ONECX_TENANT_UI}
@@ -1251,6 +1356,7 @@ services:
       - onecx
     profiles:
       - all
+      - ht
 
   ########## ONECX THEME
   onecx-theme-svc:
@@ -1283,6 +1389,7 @@ services:
       - all
       - base
       - data-import
+      - ht
 
   onecx-theme-bff:
     image: ${ONECX_THEME_BFF}
@@ -1310,6 +1417,7 @@ services:
       - onecx
     profiles:
       - all
+      - ht
 
   onecx-theme-ui:
     image: ${ONECX_THEME_UI}
@@ -1329,6 +1437,7 @@ services:
       - onecx
     profiles:
       - all
+      - ht
 
   ########## ONECX USER-PROFILE
   onecx-user-profile-avatar-svc:
@@ -1359,6 +1468,7 @@ services:
       - onecx
     profiles:
       - all
+      - ht
       - base
 
   onecx-user-profile-svc:
@@ -1390,6 +1500,7 @@ services:
     profiles:
       - all
       - base
+      - ht
 
   onecx-user-profile-bff:
     image: ${ONECX_USER_PROFILE_BFF}
@@ -1420,6 +1531,7 @@ services:
     profiles:
       - all
       - base
+      - ht
 
   onecx-user-profile-ui:
     image: ${ONECX_USER_PROFILE_UI}
@@ -1445,6 +1557,7 @@ services:
     profiles:
       - all
       - base
+      - ht
 
   ########## ONECX WELCOME
   onecx-welcome-svc:
@@ -1477,6 +1590,7 @@ services:
     profiles:
       - all
       - data-import
+      - ht
 
   onecx-welcome-bff:
     image: ${ONECX_WELCOME_BFF}
@@ -1504,6 +1618,7 @@ services:
       - onecx
     profiles:
       - all
+      - ht
 
   onecx-welcome-ui:
     image: ${ONECX_WELCOME_UI}
@@ -1523,6 +1638,7 @@ services:
       - onecx
     profiles:
       - all
+      - ht
 
   ########## ONECX WORKSPACE
   onecx-workspace-svc:
@@ -1556,6 +1672,7 @@ services:
       - all
       - base
       - data-import
+      - ht
 
   onecx-workspace-bff:
     image: ${ONECX_WORKSPACE_BFF}
@@ -1584,6 +1701,7 @@ services:
     profiles:
       - all
       - base
+      - ht
 
   onecx-workspace-ui:
     image: ${ONECX_WORKSPACE_UI}
@@ -1609,6 +1727,7 @@ services:
     profiles:
       - all
       - base
+      - ht
 
   ########## ONECX NOTIFICATION
   onecx-notification-svc:
@@ -1642,6 +1761,7 @@ services:
       - onecx
     profiles:
       - all
+      - ht
 
   onecx-notification-bff:
     image: ${ONECX_NOTIFICATION_BFF}
@@ -1653,6 +1773,7 @@ services:
       ONECX_PERMISSIONS_PRODUCT_NAME: "onecx-notification"
       QUARKUS_VERTX_CLUSTER_CLUSTERED: "true"
       JAVA_TOOL_OPTIONS: "-Dhazelcast.config=/deployments/hazelcast-compose.xml"
+      ONECX_NOTIFICATION_TOKEN_VERIFIED: "false"
     volumes:
       - ./src/main/resources/hazelcast-compose.xml:/deployments/hazelcast-compose.xml:ro
     healthcheck:
@@ -1664,6 +1785,9 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+    depends_on:
+      onecx-notification-svc:
+        condition: service_healthy
     labels:
       - "traefik.http.services.onecx-notification-bff.loadbalancer.server.port=8080"
       - "traefik.http.routers.onecx-notification-bff.rule=Host(`onecx-notification-bff`)"
@@ -1672,6 +1796,7 @@ services:
       - onecx
     profiles:
       - all
+      - ht
 
   onecx-notification-bff-2:
     image: ${ONECX_NOTIFICATION_BFF}
@@ -1683,6 +1808,7 @@ services:
       ONECX_PERMISSIONS_PRODUCT_NAME: "onecx-notification"
       QUARKUS_VERTX_CLUSTER_CLUSTERED: "true"
       JAVA_TOOL_OPTIONS: "-Dhazelcast.config=/deployments/hazelcast-compose.xml"
+      ONECX_NOTIFICATION_TOKEN_VERIFIED: "false"
     volumes:
       - ./src/main/resources/hazelcast-compose.xml:/deployments/hazelcast-compose.xml:ro
     healthcheck:
@@ -1702,6 +1828,119 @@ services:
       - onecx
     profiles:
       - all
+      - ht
+
+  onecx-human-task-svc:
+    image: ${ONECX_HUMAN_TASK_SVC}
+    container_name: onecx-human-task-svc
+    environment:
+      <<: *svc_multi_tenancy
+      QUARKUS_DATASOURCE_USERNAME: onecx_human_task
+      QUARKUS_DATASOURCE_PASSWORD: onecx_human_task
+      QUARKUS_DATASOURCE_JDBC_URL: "jdbc:postgresql://postgresdb:5432/onecx_human_task?sslmode=disable"
+      ADAPTER_URLS_N8N: "http://onecx-human-task-n8n-adapter:8080"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "bash -c 'exec 3<>/dev/tcp/localhost/8080 && printf \"GET /q/health HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n\" >&3 && read line <&3 && case \"$$line\" in *200*) exit 0;; *) exit 1;; esac'",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      keycloak-app:
+        condition: service_healthy
+    labels:
+      - "traefik.http.services.onecx-human-task-svc.loadbalancer.server.port=8080"
+      - "traefik.http.routers.onecx-human-task-svc.rule=Host(`onecx-human-task-svc`)"
+      - "traefik.http.routers.onecx-human-task-svc.entrypoints=web"
+    networks:
+      - onecx
+    profiles:
+      - all
+      - ht
+
+  onecx-human-task-bff:
+    image: ${ONECX_HUMAN_TASK_BFF}
+    container_name: onecx-human-task-bff
+    environment:
+      <<: *bff_environment
+      ONECX_PERMISSIONS_PRODUCT_NAME: "onecx-human-task"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "bash -c 'exec 3<>/dev/tcp/localhost/8080 && printf \"GET /q/health HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n\" >&3 && read line <&3 && case \"$$line\" in *200*) exit 0;; *) exit 1;; esac'",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      onecx-human-task-svc:
+        condition: service_healthy
+    labels:
+      - "traefik.http.services.onecx-human-task-bff.loadbalancer.server.port=8080"
+      - "traefik.http.routers.onecx-human-task-bff.rule=Host(`onecx-human-task-bff`)"
+      - "traefik.http.routers.onecx-human-task-bff.entrypoints=web"
+    networks:
+      - onecx
+    profiles:
+      - all
+      - ht
+
+  onecx-human-task-ui:
+    image: ${ONECX_HUMAN_TASK_UI}
+    container_name: onecx-human-task-ui
+    environment:
+      APP_BASE_HREF: "/mfe/human-task/"
+      APP_ID: "onecx-human-task-ui"
+      PRODUCT_NAME: "onecx-human-task"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "-G", "http://localhost:8080"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    depends_on:
+       onecx-human-task-bff:
+         condition: service_healthy
+    labels:
+      - "traefik.http.services.onecx-human-task-ui.loadbalancer.server.port=8080"
+      - "traefik.http.routers.onecx-human-task-ui.rule=Host(`onecx.localhost`) && PathPrefix(`/mfe/human-task/`)"
+      - "traefik.http.routers.onecx-human-task-ui.entrypoints=web"
+    networks:
+      - onecx
+    profiles:
+      - all
+      - ht
+
+  onecx-human-task-n8n-adapter:
+    image: ${ONECX_HUMAN_TASK_N8N_ADAPTER}
+    container_name: onecx-human-task-n8n-adapter
+    environment:
+      <<: *svc_multi_tenancy
+      N8N_URL: "http://n8n:5678"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "bash -c 'exec 3<>/dev/tcp/localhost/8080 && printf \"GET /q/health HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n\" >&3 && read line <&3 && case \"$$line\" in *200*) exit 0;; *) exit 1;; esac'",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      onecx-human-task-svc:
+        condition: service_healthy
+    labels:
+      - "traefik.http.services.onecx-human-task-n8n-adapter.loadbalancer.server.port=8080"
+      - "traefik.http.routers.onecx-human-task-n8n-adapter.rule=Host(`onecx-human-task-n8n-adapter`)"
+      - "traefik.http.routers.onecx-human-task-n8n-adapter.entrypoints=web"
+    networks:
+      - onecx
+    profiles:
+      - all
+      - ht
 
   onecx-notification-ui:
     image: ${ONECX_NOTIFICATION_UI}
@@ -1726,6 +1965,7 @@ services:
       - onecx
     profiles:
       - all
+      - ht
 
   ########################################
   #########   DUMMY service   ############
@@ -1795,3 +2035,26 @@ services:
       - onecx
     profiles:
       - all
+
+  waiting-on-profile-ht:
+    image: alpine:3
+    container_name: waiting-on-profile-ht
+    depends_on:
+      pgadmin:
+        condition: service_healthy
+      onecx-parameter-svc:
+        condition: service_healthy
+      onecx-shell-ui:
+        condition: service_healthy
+      onecx-user-profile-ui:
+        condition: service_healthy
+      onecx-workspace-ui:
+        condition: service_healthy
+      n8n:
+        condition: service_healthy
+      # camunda:
+      #   condition: service_healthy
+    networks:
+      - onecx
+    profiles:
+      - ht

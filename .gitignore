@@ -7,6 +7,7 @@ init-data/traefik/active/*
 .vscode
 *.log
 api-key*
+ai-config*
 /versions/v2/storage
 /versions/v2/logs
 

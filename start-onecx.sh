@@ -55,6 +55,7 @@ enable_security () {
 IMPORT=yes
 EDITION=v2
 PROFILE=base
+IMPORT_DATA_TYPE=base
 SECURITY=false
 SECURITY_AUTH_USED=no
 SECURITY_TENANT_ID_ENABLED=false
@@ -83,8 +84,8 @@ while getopts ":he:p:sx" opt; do
     p ) if [[ "$OPTARG" == -* ]]; then
           printf '  %b\n' "${RED}Missing parameter for option -p${NC}"
           usage 1
-        elif [[ "$OPTARG" != "all" && "$OPTARG" != "base" ]]; then
-          printf '  %b\n' "${RED}Unacceptable Docker profile, should be one of [ 'all', 'base' ]${NC}"
+        elif [[ "$OPTARG" != "all" && "$OPTARG" != "base" && "$OPTARG" != "ht" ]]; then
+          printf '  %b\n' "${RED}Unacceptable Docker profile, should be one of [ 'all', 'base', 'ht' ]${NC}"
           usage 1
         else
           PROFILE=$OPTARG
@@ -163,11 +164,17 @@ shell_is_healthy=$(docker inspect --format='{{.State.Health.Status}}' onecx-shel
 
 #################################################################
 ## Import profile data
+if [[ "$PROFILE" == "ht" ]]; then
+  IMPORT_DATA_TYPE="all"
+else
+  IMPORT_DATA_TYPE="$PROFILE"
+fi
+
 if [[ "$shell_is_healthy" == "healthy" && "$IMPORT" == "yes" ]]; then
   # Ensure script is executable
   if [[ -f "./import-onecx.sh" ]]; then
     chmod +x ./import-onecx.sh
-    if ! ./import-onecx.sh -d "$PROFILE"; then
+    if ! ./import-onecx.sh -d "$IMPORT_DATA_TYPE"; then
       printf '  %b\n' "${YELLOW}Warning: Import failed${NC}"
     fi
   else

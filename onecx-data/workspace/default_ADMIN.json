@@ -27,10 +27,20 @@
       "products": [
         {
           "productName": "onecx-ai-provider",
-          "baseUrl": "/ai",
+          "baseUrl": "/ai-provider",
           "microfrontends": [
             {
               "appId": "onecx-ai-provider-ui",
+              "basePath": "/"
+            }
+          ]
+        },
+        {
+          "productName": "onecx-human-task",
+          "baseUrl": "/human-task",
+          "microfrontends": [
+            {
+              "appId": "onecx-human-task-ui",
               "basePath": "/"
             }
           ]
@@ -106,6 +116,16 @@
           ]
         },
         {
+          "productName": "onecx-notification",
+          "baseUrl": "/notification",
+          "microfrontends": [
+            {
+              "appId": "onecx-notification-ui",
+              "basePath": "/"
+            }
+          ]
+        },
+        {
           "productName": "onecx-parameter",
           "baseUrl": "/parameter",
           "microfrontends": [
@@ -138,12 +158,7 @@
         {
           "productName": "onecx-search-config",
           "baseUrl": "/search-config",
-          "microfrontends": [
-            {
-              "appId": "onecx-search-config-ui",
-              "basePath": "/"
-            }
-          ]
+          "microfrontends": []
         },
         {
           "productName": "onecx-shell",
@@ -369,6 +384,11 @@
               "productName": "onecx-shell",
               "appId": "onecx-shell-ui",
               "name": "./OneCXShellToastComponent"
+            },
+            {
+              "productName": "onecx-notification",
+              "appId": "onecx-notification-ui",
+              "name": "./NotificationConnectorComponent"
             }
           ]
         },
@@ -947,7 +967,7 @@
                   "url": "/document",
                   "disabled": false,
                   "position": 6,
-                  "badge": "file",
+                  "badge": "file-pdf",
                   "external": false,
                   "target": "_self",
                   "i18n": {},

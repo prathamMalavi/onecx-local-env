@@ -1,0 +1,16 @@
+{
+  "appVersion": "xxx",
+  "appName": "App2 Angular-21 4022 UI",
+  "description": "App2 Angular-21 4022 UI",
+  "contact": "onecx@1000kit.org",
+  "remoteBaseUrl": "http://localhost:4022/",
+  "remoteEntry": "http://localhost:4022/remoteEntry.js",
+  "note": "Imported MFE",
+  "exposedModule": "./RemoteModule",
+  "technology": "WEBCOMPONENTMODULE",
+  "remoteName": "app2-ocx-test-component-21",
+  "tagName": "app2-ocx-test-component-21",
+  "type": "MODULE",
+  "deprecated": false,
+  "undeployed": false
+}

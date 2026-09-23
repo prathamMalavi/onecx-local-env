@@ -1,0 +1,20 @@
+{
+  "id": "onecx-local-env-import-assignments-onecx-angular-20-module-test",
+  "assignments": {
+    "onecx-angular-20-module-test": {
+      "onecx-angular-20-module-test-app-ui": {
+        "onecx-admin": {
+          "TEST": [
+            "SEARCH",
+            "DETAIL",
+            "EDIT",
+            "DELETE",
+            "BACK",
+            "DIALOG",
+            "VIEW_TESTS"
+          ]
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "appVersion": "xxx",
+  "appName": "App3 Angular-21 4025 UI",
+  "description": "App3 Angular-21 4025 UI",
+  "contact": "onecx@1000kit.org",
+  "remoteBaseUrl": "http://localhost:4025/",
+  "remoteEntry": "http://localhost:4025/remoteEntry.js",
+  "note": "Imported MFE",
+  "exposedModule": "./RemoteModule",
+  "technology": "WEBCOMPONENTMODULE",
+  "remoteName": "app3-ocx-test-component-21",
+  "tagName": "app3-ocx-test-component-21",
+  "type": "MODULE",
+  "deprecated": false,
+  "undeployed": false
+}

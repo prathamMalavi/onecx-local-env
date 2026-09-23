@@ -1,0 +1,11 @@
+{
+  "version": "xxx",
+  "description": "App2 Angular-21 4022",
+  "imageUrl": null,
+  "iconName": "star",
+  "displayName": "App2 Angular-21 4022",
+  "basePath": "/app2-angular-21-test",
+  "classifications": [],
+  "multitenancy": true,
+  "undeployed": false
+}

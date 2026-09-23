@@ -1,0 +1,33 @@
+# ####################################################
+# # Integrate a local running Microfrontend into OneCX
+# ####################################################
+# # Microfrontend: "shell""
+# http:
+#   routers:
+#     local_shell:
+#       # path prefix as used for MFE registration in product store
+#       rule: "Host(`onecx.localhost`) && PathPrefix(`/onecx-shell/`)"
+#       service: local_shell
+#       # higher prio than calculated based on rule length (traefik standard)
+#       priority: 323
+#       middlewares:
+#         - strip_shell
+
+#   # Remove the used mfe path so that it maps directly to localhost:port
+#   middlewares:
+#     strip_shell:
+#       stripPrefix:
+#         prefixes:
+#           - "/"
+
+#   services:
+#     local_shell:
+#       loadBalancer:
+#         servers:
+#         - url: "http://host.docker.internal:5000/"   # Angular project started outside Docker with this port
+
+# http://localhost:6030/remoteEntry.js
+
+
+
+# Run npm run start:local-env -- --port=5000 --public-host=http://localhost:5000

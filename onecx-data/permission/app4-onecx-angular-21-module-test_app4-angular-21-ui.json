@@ -1,0 +1,33 @@
+{
+  "name": "app4-angular-21-ui",
+  "permissions": [
+    {
+      "resource": "TEST",
+      "action": "SEARCH"
+    },
+    {
+      "resource": "TEST",
+      "action": "DETAIL"
+    },
+    {
+      "resource": "TEST",
+      "action": "EDIT"
+    },
+    {
+      "resource": "TEST",
+      "action": "DELETE"
+    },
+    {
+      "resource": "TEST",
+      "action": "BACK"
+    },
+    {
+      "resource": "TEST",
+      "action": "DIALOG"
+    },
+    {
+      "resource": "TEST",
+      "action": "VIEW_TESTS"
+    }
+  ]
+}

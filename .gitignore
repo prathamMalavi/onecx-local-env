@@ -17,3 +17,5 @@ api-key*
 A_Extras
 .0_agents-deployer/
 .github/
+.0_angular-21-test-apps/
+.context/

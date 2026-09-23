@@ -1,29 +1,29 @@
 ####################################################
 # Integrate a local running Microfrontend into OneCX
 ####################################################
-# Microfrontend: "{{MFE_NAME}}"
+# Microfrontend: "onecx-angular-21-module-test-ui"
 http:
   routers:
-    local_{{MFE_NAME}}:
+    local_onecx-angular-21-module-test-ui:
       # path prefix as used for MFE registration in product store
-      rule: "Host(`onecx.localhost`) && PathPrefix(`{{MFE_PATH}}`)"
-      service: local_{{MFE_NAME}}
+      rule: "Host(`onecx.localhost`) && PathPrefix(`/mfe/onecx-angular-21-module-test/`)"
+      service: local_onecx-angular-21-module-test-ui
       # higher prio than calculated based on rule length (traefik standard)
       priority: 323
       entryPoints:
         - web
       middlewares:
-        - strip_{{MFE_NAME}}
+        - strip_onecx-angular-21-module-test-ui
 
   # Remove the used mfe path so that it maps directly to localhost:port
   middlewares:
-    strip_{{MFE_NAME}}:
+    strip_onecx-angular-21-module-test-ui:
       stripPrefix:
         prefixes:
-          - "{{MFE_STRIPPATH}}"
+          - "/mfe/onecx-angular-21-module-test"
 
   services:
-    local_{{MFE_NAME}}:
+    local_onecx-angular-21-module-test-ui:
       loadBalancer:
         servers:
-          - url: "http://host.docker.internal:{{MFE_PORT}}/" # Angular project started outside Docker with this port
+        - url: "http://onecx.localhost:4006/"   # Angular project started outside Docker with this port

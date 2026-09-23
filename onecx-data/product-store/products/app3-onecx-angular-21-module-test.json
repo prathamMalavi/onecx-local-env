@@ -1,0 +1,11 @@
+{
+  "version": "xxx",
+  "description": "App3 Angular-21 4025",
+  "imageUrl": null,
+  "iconName": "star",
+  "displayName": "App3 Angular-21 4025",
+  "basePath": "/app3-angular-21-test",
+  "classifications": [],
+  "multitenancy": true,
+  "undeployed": false
+}

@@ -192,6 +192,18 @@ fi
 chmod +x "$IMPORT_SCRIPT"
 "$IMPORT_SCRIPT"  "$TENANT"  "$VERBOSE"  "$SECURITY"  "$IMPORT_TYPE"
 
+# docker exec -i postgresdb \
+# psql -U postgres -d onecx_product_store \
+# -c "UPDATE microfrontend
+# SET share_scope = 'angular_21'
+# WHERE exposed_module = './RemoteModule';"
+
+
+# docker exec -i postgresdb \
+# psql -U postgres -d onecx_product_store \
+# -c "UPDATE microfrontend
+# SET share_scope = 'angular_21'
+# WHERE exposed_module = './OneCXTestProjectModule';"
 
 #################################################################
 ## remove profile helper service, ignoring any error message

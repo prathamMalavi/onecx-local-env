@@ -1,0 +1,621 @@
+https://onecx.github.io/docs/documentation/current/onecx-local-env/internal/_onecx-env-sets.html
+
+.Excerpt from `versions/v2/compose.yaml`
+[source,yaml]
+----
+...
+x-bff-variables: &bff_environment
+  ONECX_PERMISSIONS_ENABLED: ${ONECX_PERMISSIONS_ENABLED}
+  ONECX_PERMISSIONS_CACHE_ENABLED: ${ONECX_PERMISSIONS_CACHE_ENABLED}
+  QUARKUS_OIDC_CLIENT_CLIENT_ID: ${ONECX_OIDC_CLIENT_CLIENT_ID}
+  QUARKUS_OIDC_CLIENT_CREDENTIALS_SECRET: ${ONECX_OIDC_CLIENT_S_E_C_R_E_T}
+  QUARKUS_OIDC_CLIENT_AUTH_SERVER_URL: ${ONECX_AUTH_SERVER_URL}
+  QUARKUS_OIDC_AUTH_SERVER_URL: ${ONECX_AUTH_SERVER_URL}
+  TKIT_LOG_JSON_ENABLED: ${JSON_LOGGER_ENABLED}
+  TKIT_SECURITY_AUTH_ENABLED: ${ONECX_SECURITY_AUTH_ENABLED}
+
+x-svc-variables: &svc_single_tenancy
+  QUARKUS_LOG_LEVEL: ${ONECX_LOG_LEVEL}
+  QUARKUS_OIDC_AUTH_SERVER_URL: ${ONECX_AUTH_SERVER_URL}
+  QUARKUS_OIDC_CLIENT_CLIENT_ID: ${ONECX_OIDC_CLIENT_CLIENT_ID}
+  QUARKUS_OIDC_CLIENT_CREDENTIALS_SECRET: ${ONECX_OIDC_CLIENT_S_E_C_R_E_T}
+  QUARKUS_OIDC_CLIENT_AUTH_SERVER_URL: ${ONECX_AUTH_SERVER_URL}
+  QUARKUS_DATASOURCE_JDBC_MIN_SIZE: ${ONECX_DATASOURCE_JDBC_MIN_SIZE}
+  QUARKUS_DATASOURCE_JDBC_MAX_SIZE: ${ONECX_DATASOURCE_JDBC_MAX_SIZE}
+  QUARKUS_DATASOURCE_JDBC_IDLE_REMOVAL_INTERVAL: ${ONECX_DATASOURCE_JDBC_IDLE_REMOVAL_INTERVAL}
+  TKIT_LOG_JSON_ENABLED: ${JSON_LOGGER_ENABLED}
+  TKIT_SECURITY_AUTH_ENABLED: ${ONECX_SECURITY_AUTH_ENABLED}
+  
+x-svc-multi_tenancy: &svc_multi_tenancy
+  <<: *svc_single_tenancy
+  QUARKUS_REST_CLIENT_ONECX_TENANT_URL: ${ONECX_REST_CLIENT_ONECX_TENANT_URL}
+  ONECX_TENANT_CACHE_ENABLED: ${ONECX_TENANT_CACHE_ENABLED}
+  TKIT_RS_CONTEXT_TENANT_ID_ENABLED: ${ONECX_RS_CONTEXT_TENANT_ID_ENABLED}
+  TKIT_RS_CONTEXT_TENANT_ID_MOCK_ENABLED: ${ONECX_RS_CONTEXT_TENANT_ID_MOCK_ENABLED}
+...
+----
+
+https://onecx.github.io/docs/documentation/current/onecx-local-env/internal/_onecx-env.html
+
+.Excerpt from `versions/v2/.env`
+[source,yaml]
+----
+########################################
+############## GENERAL #################
+########################################
+COMPOSE_PROJECT_NAME=onecx-local-env
+COMPOSE_CONVERT_WINDOWS_PATHS=1
+JSON_LOGGER_ENABLED=false
+
+########################################
+############# BASE Services ############
+########################################
+TRAEFIK=traefik:3.6.1
+POSTGRES=docker.io/library/postgres:15.5
+PGADMIN=dpage/pgadmin4:latest
+KEYCLOAK=quay.io/keycloak/keycloak:26.2.0
+
+########################################
+########## OneCX Variables #############
+########################################
+KC_REALM=onecx
+KC_APP_NAME=keycloak-app
+KC_URL=http://${KC_APP_NAME}
+KC_CLIENT_ID=onecx-shell-ui-client    # Client ID set in shell environment
+...
+----
+
+https://onecx.github.io/docs/documentation/current/onecx-local-env/internal/add-data.html
+
+= Add extra Data in OneCX Local Environment
+
+parking place
+
+
+[#adding-new-files]
+== Adding New Files - Guidelines here?
+
+To add new files to the `imports` directory, follow these guidelines:
+
+1. **Naming Conventions** - use consistent naming patterns based on the type of data being imported. The patterns are listed in the <<convention-and-file-list, Convention and file list>> section.
+
+2. **File Structure** - JSON files should adhere to the existing structure that is compliant with the respective service's API.
+
+3. **Script Updates** - If adding a new type of data, add new import script that includes new files and uses the appropriate service. Make sure to define the structure of the JSON files.
+
+4. **Testing** - Test the import process by running the relevant script and verifying the data in the environment.
+
+By adhering to these conventions, you can ensure consistency and maintainability in the OneCX Local Environment.
+
+https://onecx.github.io/docs/documentation/current/onecx-local-env/internal/custom-certificates.html
+
+= Adding Custom Certificates for Java Applications in Docker
+
+The use of custom certificates solves issues with Java applications running inside Docker containers that need to communicate over HTTPS with services using non-standard or self-signed certificates.
+
+== Why is this about?
+
+When running Java applications inside Docker containers, HTTPS connections often fail with errors like:
+
+.Excerpt from Docker logs of the affected Java service
+[source,text]
+----
+PKIX path building failed: unable to find valid certification path to requested target
+----
+
+=== Common Use Cases
+
+Corporate TLS Interception:: Tools like Zscaler or internal proxies re-sign certificates with a corporate CA.
+Self-Signed Certificates:: Internal services using self-signed certs.
+Private PKI:: Enterprise environments with custom root or intermediate CAs.
+
+=== Problems that arise
+
+* Outbound HTTPS calls fail (e.g., REST APIs, OAuth, external services).
+* Java throws any TLS/SSL exception e.g.  `SunCertPathBuilderException`.
+
+
+== Add Custom Certificates
+
+To resolve these issues, you need to add the required certificate to a Java Truststore used by your Java applications running inside Docker containers.
+
+=== 1. Get the Certificate
+
+Identify and export the necessary certificate from the target HTTPS service. +
+Open the HTTPS website (where the error occurs) in your browser (here exemplarily Chrome).
+
+Click the icon left on URL, then::
+
+. Click on *Connection is secure*
+. Click on *Certificate is valid*
+. Navigate to *Details* tab
+  .. Select the certificate with the target URL in *Certificate Hierarchy*
+  .. Click on *Export* and save as Base-64 encoded `.crt` file.
+
+[NOTE]
+====
+Alternatively, you can 
+
+* export the certificate using command line tools like `openssl` or `curl` or
+* use system-specific certificate management tools to export root and intermediate CAs.
+====
+
+Use the steps above to export all necessary certificates (root and intermediate CAs) that are required to establish a valid trust chain to the target HTTPS service.
+
+.Place the exported files in the *certs* folder inside of *onecx-local-env*
+[source, text]
+----
+certs/
+  ├── YourCertificate.crt
+  └── YourCertificate2.crt
+----
+
+=== 2. Create a Java Truststore
+
+Use the provided setup script to create or update a truststore with all your certificates.
+The script automatically imports all `.crt` and `.pem` files from the specified directory.
+In some cases, you will prompt to enter the root password for cleanup of existing entries.
+
+.Setup Truststore with password "trustjava"
+[source,bash]
+----
+./setup-truststore.sh
+----
+
+.Result: Truststore location
+[source]
+----
+certs/truststore.jks
+----
+
+=== 3. Verify the Truststore Contents
+
+Optionally, you can check the contents of the truststore by listing all the certificates it contains using the following command:
+
+.Verify Truststore Contents
+[source,bash]
+----
+keytool -list -keystore ./certs/truststore.jks -storepass trustjava
+----
+
+Expected output showing all imported certificates with their aliases.
+
+.Example Output with certificate for ollama.one-cx.org
+image::scripts/script_setup-truststore.sh_content.png[]
+
+
+=== 4. Use Truststore in AI Service
+
+Update your Docker Compose file to mount the truststore and configure Java to use it on the relevant services.
+
+.For Default JVM Applications
+[source,yaml]
+----
+services:
+  onecx-ai-provider-svc:
+    image: ${ONECX_AI_PROVIDER_SVC}
+    volumes:
+      - ./certs/truststore.jks:/opt/certs/truststore.jks:ro
+    environment:
+      JAVA_TOOL_OPTIONS: >-
+        -Djavax.net.ssl.trustStore=/opt/certs/truststore.jks
+        -Djavax.net.ssl.trustStorePassword=trustjava
+        -Djavax.net.ssl.trustStoreType=JKS
+----
+
+.For GraalVM Native Image Applications
+[source,yaml]
+----
+services:
+  onecx-ai-provider-svc:
+    image: ${ONECX_AI_PROVIDER_SVC}
+    volumes:
+      - ./certs/truststore.jks:/opt/certs/truststore.jks:ro
+    entrypoint: ["/work/application"]
+    command:
+    - "-Djavax.net.ssl.trustStore=/opt/certs/truststore.jks"
+    - "-Djavax.net.ssl.trustStorePassword=trustjava"
+    - "-Djavax.net.ssl.trustStoreType=JKS"
+----
+
+
+=== 5. Restart and Verify
+
+Verify the SSL/TLS connection works by triggering an HTTPS call and confirming no `PKIX path building failed` or any other TLS/SSL error appears.
+
+https://onecx.github.io/docs/documentation/current/onecx-local-env/internal/networking.html
+
+= Networking in OneCX Local Environment
+
+:different_ports: xref:documentation:onecx-docs-start/enable_hot_reload.adoc#note-different-ports
+:ole_setup: xref:onecx-local-env:setup.adoc
+
+This document explains how networking is configured and managed in the OneCX Local Environment.
+
+[#docker-resource-names]
+== Docker Resource Names
+To isolate the local OneCX environment from the host system and other Docker environments, Docker uses the project name *onecx-local-env*. This project name serves as a prefix for all created Docker resources (containers, networks, volumes), ensuring seamless communication between all services while minimizing disruptions and conflicts.
+
+The following Docker resource names and prefixes are used in the OneCX Local Environment:
+
+[horizontal]
+Project Name::      `onecx-local-env`
+Network Name::      `onecx-local-env_onecx`
+Container Prefix::  `onecx-local-env_`
+
+
+== Network Actors and Components
+The OneCX Local Environment uses a sophisticated networking setup that combines:
+
+* Traefik
+* Service Discovery and Routing
+* Docker Compose Network
+* Host file Configuration
+* Environment Configuration
+
+=== Traefik
+
+Traefik serves as the central entry point for all HTTP traffic in the OneCX environment. It acts as:
+
+[horizontal,labelwidth=20]
+Reverse Proxy::        Routes incoming requests to appropriate backend services
+Load Balancer::        Distributes traffic across service instances
+Service Discovery::    Automatically detects new services through Docker labels
+API Gateway::          Provides a single entry point for all microservices
+
+Configuration::        The Traefik configuration is split across multiple files: +
+* `init-data/traefik/base/traefik-conf.yml` +
+  Main configuration
+* `init-data/traefik/base/traefik-services.yml` +
+  Static service definitions for local development
+* `versions/<version>/compose.yaml` +
+  OneCX service registrations
+
+Traefik Settings::     `traefik-conf.yml`
+[source,yaml]
+----
+entryPoints:
+  web:
+    address: ":80"  # HTTP entry point
+providers:
+  docker:
+    endpoint: unix:///var/run/docker.sock
+  file:
+    directory: /etc/traefik/active
+    watch: true
+----
+
+Pls. aware the locations of Traefik configuration files are mapped as follows:
+----
+init-data/traefik/base/traefik-conf.yml  => /etc/traefik/traefik.yml
+init-data/traefik/active                 => /etc/traefik/active
+----
+
+=== Service Discovery
+
+Traefik Labels::
+
+Services register themselves with Traefik using Docker labels:
+
+.Traefik Label Patterns: SVC and BFF
+[source,yaml]
+----
+labels:
+  - "traefik.http.services.<service-name>.loadbalancer.server.port=8080"
+  - "traefik.http.routers.<service-name>.rule=Host(`<service-name>`)"
+----
+
+.Traefik Label Patterns: UI
+[source,yaml]
+----
+labels:
+  - "traefik.http.services.<ui-service-name>.loadbalancer.server.port=8080"
+  - "traefik.http.routers.<ui-service-name>.rule=Host(`onecx.localhost`) && PathPrefix(`/<app-path>/`)"
+----
+
+
+=== Service Routing Rules
+
+Different routing patterns are used for different service types:
+
+.Backend Services (BFF/SVC) and Infrastructure Services
+[source,yaml]
+----
+Host(`service-name`)
+----
+
+.Frontend Applications (UI)
+[source,yaml]
+----
+Host(`onecx.localhost`) && PathPrefix(`/app-path/`)
+----
+
+=== Port Mapping Strategy
+
+External Ports (Host → Container)::
+Key external ports exposed to the host:
++
+[cols="2,2,3"]
+|===
+| Service | Host Port | Purpose
+
+| Traefik HTTP
+| 80
+| Main HTTP entry point
+
+| Traefik Dashboard
+| 8082
+| Web UI for Traefik management
+
+| Keycloak
+| 8080
+| Identity and access management
+
+| PostgreSQL
+| 5432
+| Database direct access
+|===
+
+//
+Internal Ports (Container → Container):: Services communicate internally using standard ports: +
+
+[horizontal,indentSize=4]
+Web Services::          Port 8080 (Quarkus default)
+PostgreSQL::            Port 5432
+Frontend Applications:: Port 8080 (Nginx)
+
+
+=== Docker Compose Network
+Here only the v2 edition is described. The v1 edition is similar but uses the `example` network.
+
+Central configuration of the Docker Compose network is defined in `versions/v2/compose.yaml`
+
+.Network Configuration in Docker Compose
+image::onecx-network-in-docker-compose.png[width=300]
+
+The network alias used by the services is *onecx*. On project level the network is named *onecx-local-env_onecx*. This is also the name visible when executing `docker network ls`. See section at the top of this document about the xref:#docker-resource-names[Docker resource names].
+
+
+Network Features::
+[horizontal]
+Service-to-Service Communication:: Services can communicate using container names as hostnames
+Automatic DNS Resolution::         Docker provides built-in DNS for container name resolution
+Network Isolation::                Traffic is isolated from the host network and other Docker networks
+Network Communication Patterns::   Services communicate using these patterns
+
+[cols="2,3,3"]
+|===
+| Communication Type | Example | URL Pattern
+
+| Frontend to BFF
+| Shell UI → Shell BFF
+| `http://onecx-shell-bff:8080`
+
+| BFF to Service  
+| Shell BFF → Theme Service
+| `http://onecx-theme-svc:8080`
+
+| Service to Database
+| Theme Service → PostgreSQL
+| `jdbc:postgresql://postgresdb:5432/onecx_theme`
+
+| Service to Keycloak
+| Any Service → Keycloak
+| `http://keycloak-app:8080`
+|===
+
+
+=== Host File Configuration
+Check the {ole_setup}#hosts[hosts entries section] for detailed instructions.
+
+
+=== Environment Configuration
+
+Within the Docker Compose files (`compose.yaml`), several environment variables are used to manage settings for services:
+
+The source of the environment variables is located in the version folder: `versions/v2/.env`. +
+Here the link:https://raw.githubusercontent.com/onecx/onecx-local-env/refs/heads/main/versions/v2/.env[Link to GitHub source file].
+
+.Environment variables used in Docker Compose
+[%collapsible]
+====
+link:https://raw.githubusercontent.com/onecx/onecx-local-env/refs/heads/main/versions/v2/.env[Link to GitHub source file]
+
+include::./_onecx-env.adoc[]
+====
+
+.Environment variable sets defined in Docker Compose
+[%collapsible]
+====
+link:https://raw.githubusercontent.com/onecx/onecx-local-env/refs/heads/main/versions/v2/compose.yaml[Link to GitHub source file]
+
+include::./_onecx-env-sets.adoc[]
+====
+
+.Environment variable set use for BFF services
+[%collapsible]
+====
+[source,yaml]
+----
+  onecx-announcement-bff:
+    ...
+    environment:
+      <<: *bff_environment
+      ...
+----
+====
+
+.Environment variable set use for services with `multi-tenancy` awareness
+[%collapsible]
+====
+[source,yaml]
+----
+  onecx-announcement-svc:
+    ...
+    environment:
+      <<: *svc_multi_tenancy
+      ...
+----
+====
+
+.Environment variable set use for services with `single-tenancy` awareness
+[%collapsible]
+====
+[source,yaml]
+----
+  onecx-iam-svc:
+    ...
+    environment:
+      <<: *svc_single_tenancy
+      ...
+----
+====
+
+
+== Access Patterns
+The following access patterns illustrate how different components of the OneCX Local Environment can be accessed.
+
+OneCX Shell::    Main Entry Point
+Shell UI::
+  `http://onecx.localhost/onecx-shell/admin` +
+  All OneCX application UIs are accessed through the Shell workspace navigation
+Workspace Management UI via Shell::
+  `http://onecx.localhost/onecx-shell/admin/workspace`
+Workspace Microfrontend::
+  `http://onecx.localhost/mfe/workspace/`
+Workspace BFF::
+  `http://onecx.localhost/mfe/workspace/bff/`
+Workspace Service::
+  `http://onecx-workspace-svc:8080/`
+Traefik Routing Rule::  
+  `traefik.http.routers.onecx-workspace-ui.rule=Host(onecx.localhost) && PathPrefix(/mfe/*workspace*/)`
+
+See also the collection of utility services documented in xref:../utilities.adoc[Utilities].
+
+
+=== Microservice Communication
+Services within the OneCX Local Environment communicate using standard internal URLs based on container names and ports.
+
+[horizontal, labwidth=40]
+Frontend calls BFF::       `http://onecx.localhost/mfe/<app-path>/bff/<bff-resource>`
+BFF calls Service::        `http://<service-name>:8080/<svc-resource>`
+Service access database::  `jdbc:postgresql://postgresdb:5432/db_name`
+Service authenticate via:: `http://keycloak-app:8080`
+
+
+== Development Support
+The xref:../extend/extend.adoc[Extend OneCX] documentation describes how local running services are integrated into the OneCX Local Environment.
+
+
+== Security Considerations
+
+=== Network Isolation
+
+* Services are isolated within the Docker network
+* Only necessary ports are exposed to the host
+* Database is not directly accessible from outside (only via port 5432)
+
+=== Authentication Flow
+
+1. Browser → Traefik (onecx.localhost) → Frontend
+2. Frontend → Traefik → BFF Service
+3. BFF → Keycloak (authentication)
+4. BFF → Backend Services (with token)
+
+https://onecx.github.io/docs/documentation/current/onecx-local-env/internal/onecx-data.html
+
+= Initial Data in OneCX Local Environment
+
+The OneCX Local Environment contains data required for initial xref:../scripts/start.adoc[startup]. This data is usually automatically xref:../scripts/import.adoc[imported] after the services have started.
+
+This is an overview of the data and how its organized.
+
+
+.OneCX Initial Data
+[.stripes-even,cols="20,~,~"]
+|===
+| Data Type | Managed by | Description
+
+| Assignments
+| xref:documentation:onecx-permission:page$index.adoc[Permission Management]
+| Relationship between roles and permissions
+
+| Bookmarks
+| xref:documentation:onecx-bookmark:page$index.adoc[Bookmark Management]
+| Bookmarks for quick access to frequently used items
+
+| Parameters
+| xref:documentation:onecx-parameter:page$index.adoc[Parameter Management]
+| Used by some applications
+
+| Permissions
+| xref:documentation:onecx-permission:page$index.adoc[Permission Management]
+| Declared and used in applications.
+
+| Products (Applications)
+| xref:documentation:onecx-product-store:page$index.adoc[Application Store]
+| Application data (components, slots etc.)
+
+| Tenants
+| xref:documentation:onecx-tenant:page$index.adoc[Tenant Management]
+| Represents a customer or organizational unit using OneCX
+
+| Themes
+| xref:documentation:onecx-theme:page$index.adoc[Theme Management]
+| Customizing the look and feel of OneCX for a tenant
+
+| Workspaces
+| xref:documentation:onecx-workspace:page$index.adoc[Workspace Management]
+| Customizing the working areas for users
+
+| AI
+| AI Services
+| Configuration and data for AI Chat functionalities
+|===
+
+
+== How the Data are organized and imported
+The directory *onecx-data* in the *onecx-local-env* repository contains all data files and scripts needed to import data into the OneCX Local Environment.
+
+The xref:../scripts/import.adoc[import-onecx.sh] script is used to import data needed by the OneCX services. It can be run from the root directory of the *onecx-local-env* repository.
+It starts several scripts that import data for the different services. All data files are in JSON format and usually related to a tenant or an application.
+
+The import scripts are using *node.js* and *jq* for reading the data, split them in batches and call the respective service APIs to import the data.
+Each script is responsible for importing a specific type of data, e.g. workspaces, themes, permissions, etc.
+
+.Organization of Initial Data
+image::onecx-data-structure.png[OneCX Data Structure,alt="OneCX Data Structure",width="300"]
+
+https://onecx.github.io/docs/documentation/current/onecx-local-env/internal/profiles.html
+
+= Docker Compose Profiles in OneCX Local Environment
+
+{docker_compose_profiles_link} allow you to define different sets of services and configurations. This is particularly useful, where you might want to run only a subset of services for specific scenarios.
+
+However, this concept has its limitations. While it is well suited for starting subsets of services, it is not equally suitable for terminating these subsets.
+  
+
+== Used Compose Profiles
+
+The OneCX local environment uses the following Docker Compose profiles, which are defined in the *compose.yml* file of version 2.
+
+base::
+The *base* profile includes the essential services required to run the OneCX Local Environment.
++
+It is useful for scenarios where you want to run a minimal setup without additional features or services.
+
+all::
+The *all* profile includes almost all available services in the OneCX Local Environment. +
+Excepted are services that may require additional resources or are not commonly used in standard development scenarios.
++
+This profile is ideal for comprehensive testing or development scenarios where you need access to all common features and services provided by OneCX.
+
+data-import::
+The *data-import* profile is a specific one that includes services required for importing data into the OneCX Local Environment. +
+This profile is useful when you need to set up or refresh the environment with specific datasets without starting all services.
+
+https://onecx.github.io/docs/documentation/current/onecx-local-env/internal/utils.html
+
+= Utilities used in OneCX Local Environment
+
+include::../utilities.adoc[]

@@ -1,0 +1,706 @@
+
+https://onecx.github.io/docs/documentation/current/onecx-local-env/scripts/check-images.html
+= Check local Docker images
+
+The *check-images.sh* script is used to list local Docker images with version information. It can be run from the root directory of the *onecx-local-env* repository.
+
+.Command to list all Docker images (without any filter).
+[source,bash]
+----
+./check-images.sh
+----
+
+.List of local Docker images
+image::scripts/script_check-images.sh.png[]
+
+[TIP]
+====
+The local Docker images can easily be updated using the script xref:./update-images.adoc[update-images.sh].
+====
+
+== Available Options
+The script accepts several optional options to customize its behavior. Some options can be combined. The options are:
+
+-f::
+Image filter, see https://docs.docker.com/reference/cli/docker/image/ls/#filter
+
+-h::
+Displays help information about the script and its available options. If used then all other options are ignored.
+
+-n <text>::
+Name filter, find images which have <text> into image name
+
+== Examples
+
+=== List images with onecx in name
+
+[source,bash]
+----
+./check-images.sh   -n onecx
+----
+
+.List of local OneCX Docker images
+image::scripts/script_check-images.sh_filter-onecx.png[]
+
+=== List images marked as dangling
+
+List images marked as dangling, which means they are not tagged and not referenced by any container. This happens if there is a newer version of an image built or pulled. Such images can be removed without affecting any running container.
+
+.List candidates for deletion
+[source,bash]
+----
+./check-images.sh   -f "dangling=true"
+----
+
+The -f option can be combined with the -n option to filter for dangling images with a specific name pattern.
+
+.List outdated backend service images
+[source,bash]
+----
+./check-images.sh   -f "dangling=true" -n svc
+----
+
+== Understanding the Listing
+
+=== OneCX Version Labelling
+When building OneCX images, the version is set in the label *samo.project.version*. The value of this label is displayed in the listing as *VERSION*.
+
+=== Outdated Images
+Over time, local Docker images become outdated. Especially after updates, images with the tag `*<none>*` may be listed.
+
+.List of outdated Docker images
+image::scripts/script_check-images.sh_none-images.png[]
+
+Such images can be removed. The script xref:./update-images.adoc[update-images.sh] can be used or native with
+
+[source,bash]
+----
+docker image rm <image-id>
+----
+
+
+https://onecx.github.io/docs/documentation/current/onecx-local-env/scripts/import.html
+= Import OneCX Data
+
+To operate a local OneCX, some services require initial data, e.g. the theme, the admin workspace, permissions, etc.
+
+The *import-onecx.sh* script is used to import data needed by the OneCX services. It can be run from the root directory of the *onecx-local-env* repository.
+
+.Command for importing the data for the essential services:
+[source,bash]
+----
+./import-onecx.sh
+----
+
+.Successful import
+image::scripts/script_import-onecx.sh.png[]
+
+[NOTE]
+====
+The imports are executed *without overwriting data* that already exists in the services. +
+This allows to re-run the import script multiple times without losing any data that has been created or modified after the initial import.
+====
+
+== Available Options
+The script accepts several optional options to customize its behavior. Some options can be combined. The options are:
+
+-d::
+Specify a set of data to be imported (all, base) or a specific data type like workspace, theme etc.
+  * base (Default).
+  * all
+  * one of [ ai, bookmark, assignment, parameter, permission, mfe, ms, product, slot, tenant theme, welcome, workspace]
+
+-e::
+The edition of OneCX. This must match the edition that was used to start the environment. Supported editions are:
+  * v2 (Default).
+  * v1
+
+-h::
+Displays help information about the script and its available options. If used then all other options are ignored.
+
+-s::
+Secure authentication enabled, default not enabled (value is inherited from xref:./start.adoc[start-onecx.sh]). Automatically set on tenant-specific imports.
++
+[NOTE]
+====
+Once Docker services have been started with the security option enabled, all subsequent actions require an authenticated user. For example, an import operation must then be started with the *-s* option to succeed.
+====
+
+-t::
+Define the tenant for tenant-specific imports (e.g., workspace and theme data). When using a tenant other than the default tenant, *the security option is enabled*, and a suitable user is used for the import. The user is authorized, the tokens are retrieved, and the import is then executed using the tokens in the request header. This is why the security option is enabled for this process. +
+Tenants (corresponding to the tenant data imports):
+  * default (default)
+  * t1
+  * t2
+
+-v::
+Verbose: display details during import of objects
+
+-x::
+Skip checking running Docker services
++
+[CAUTION]
+When used, Docker does not check whether services require authentication. Please use the same security settings as when starting with xref:./start.adoc[start-onecx.sh].
+
+
+== Examples
+
+[#import-all-data]
+=== Import ALL data
+Import all available OneCX data as:
+
+* Non-tenant specific data
+* Tenant data for *default* tenant
+
+Before the import, a check is performed to ensure that all required services are already running. Any missing services are started.
+
+[source,bash]
+----
+./import-onecx.sh -d all
+----
+
+[#import-specific-data]
+=== Import specific data, skip check
+Only workspace data is imported. If the data are tenant-specific data then the default tenant is used (use flag *-t* for a different tenant).
+
+With *-x* running services are not checked beforehand. If a required service is not running, corresponding imports will fail.
+
+[source,bash]
+----
+./import-onecx.sh -d workspace -x
+----
+
+
+[#import-tenant-data]
+=== Import Tenant data
+Import OneCX data for a specific tenant, e.g. *t1*. In general, not all data types are tenant-specific. The tenant-specific data types include, for example, workspace and theme data. When importing tenant-specific data, the security option is enabled, and the import is performed using an authorized user.
+
+[source,bash]
+----
+./import-onecx.sh -t t1 -x
+----
+
+.Successful import of *t1* data with authenticated user *onecx_t1_admin*
+image::scripts/script_import-onecx.sh_tenant.png[]
+
+
+[TIP]
+====
+If you want only import tenant-specific data but do not working afterwards with secure authentication then execute the xref:./start.adoc[start-onecx.sh] script *without* *-s* option again. This reset the security option on running services.
+====
+
+
+// https://onecx.github.io/docs/documentation/current/onecx-local-env/scripts/list-containers.html
+= List Docker Containers
+
+The *list-containers.sh* script provides an overview of running Docker containers used in the OneCX Local Environment. +
+It displays the container ID, service name, image name, and current status of each container.
+The script can be executed from the root directory of the *onecx-local-env* repository.
+
+.Command to display the available options
+[source,bash]
+----
+./list-containers.sh -h
+----
+
+
+== Available Options
+The script accepts several optional options to customize its behavior. +
+The available options are:
+
+-a::
+List all containers, including those that are not part of the OneCX Local Environment. +
+Other options are ignored.
+
+-h::
+Displays help information about the script and its available options.
+
+-n <text>::
+Name filter, show only containers which have <text> into container name. +
+If used in combination with *-u* then only unhealthy containers matching the name filter are shown.
+
+-u::
+Show only unhealthy containers. +
+Can be used in combination with *-n* option.
+
+
+== Examples
+
+[#list-containers-name-filter]
+=== List containers with name filter
+The Docker which have *theme* in container name are shown.
+
+[source,bash]
+----
+./list-containers.sh  -n theme
+----
+
+.Theme Containers
+image::scripts/script_list-containers.sh_name-filter.png[]
+
+[#list-unhealthy-containers]
+=== List unhealthy containers with name filter
+The Docker which have *theme* in container name and *unhealthy* status are shown.
+
+[source,bash]
+----
+./list-containers.sh  -n theme -u
+----
+
+.No unhealthy Containers
+image::scripts/script_list-containers.sh_unhealthy-nothing.png[]
+
+
+https://onecx.github.io/docs/documentation/current/onecx-local-env/scripts/setup-truststore.html
+= Setup Java Truststore with Custom Certificates
+
+The *setup-truststore.sh* script is used to create or update a Java Truststore containing custom certificates needed by Java applications running inside Docker containers in the OneCX Local Environment.
+
+The script can be run from the root directory of the *onecx-local-env* repository:
+
+[source,bash]
+----
+./setup-truststore.sh
+----
+
+Instructions for preparing the Java Truststore with your certificates can be found under xref:../internal/custom-certificates.adoc[Custom Certificates].
+
+== Available Options
+The script accepts several optional options to customize its behavior. Some options can be combined. The options are:
+
+-d <directory>::
+Certificate directory, default: './certs'
+
+-h::
+Displays help information about the script and its available options. If used then all other options are ignored.
+
+-p <password>::
+Truststore password, length > 5, default: 'trustjava'
+
+
+== Examples
+
+[#create-truststore-default]
+=== Create truststore with default settings
+A Java Truststore is created at the default location with the default password. The script looks for certificates in the default directory `./certs` and imports all found certificates into the truststore.
+
+[source,bash]
+----
+./setup-truststore.sh
+----
+
+.Creating truststore with default settings
+image::scripts/script_setup-truststore.sh_default.png[]
+
+
+https://onecx.github.io/docs/documentation/current/onecx-local-env/scripts/start.html
+= Start local OneCX
+
+The *start-onecx.sh* script is used to start the OneCX Local Environment. By default, it will start a minimal set of services and import initial mock data on startup. Data imports will not overwrite any custom data that may already exist in the environment and can be skipped using the appropriate option. The script can be run from the root directory of the *onecx-local-env* repository:
+
+[source,bash]
+----
+./start-onecx.sh
+----
+
+.Successful starting
+image::scripts/script_start-onecx.sh.png[]
+
+[NOTE]
+====
+The script can be executed at any time. Docker checks the configuration of the services and restarts them if there are changes. Without changes, running services are not affected, and only missing services are started. Existing data that was imported or added by the user remains unchanged. 
+====
+
+[#available-options]
+== Available Options
+The script accepts several optional options to customize its behavior. Some options can be combined. The options are:
+
+-e::
+The edition of OneCX to start. Supported editions are:
+  * `v2`: Starts the current version of OneCX Local Environment (Default).
+  * `v1`: Starts the legacy version of OneCX Local Environment (Not recommended for new setups).
+
+-h:: Displays help information about the script and its available options.
+
+-p <profile-name>::
+The profile to use when starting the environment. The supported profiles are:
+  * `base`: Starts a minimal version of OneCX Local Environment with only essential services. (Default)
+  * `all`: Starts all available services defined in the Docker Compose file.
+
+-s::
+Enables secure mode, which enforces authentication/authorization and taken into account the tenant ID of the user. (Default: disabled)
++
+[NOTE]
+====
+When used, the services are started in such a way that they always require authentication AND taken into account the tenant ID, i.e. during import and login on UI!
+
+Consequently, the login takes place in the correct tenant.
+====
+
+-x::
+Skips the import of initial data after starting the services. (Default: import data according to the used profile)
+
+== Examples
+
+[#start-essential-services]
+=== Start essential Services
+The Docker services *essential* for OneCX are started. The necessary Docker volumes are created and required data are imported. Technically, these services are labelled with the *base* profile in the Docker Compose file used.
+
+There is no security context defined, so authentication/authorization on services is disabled.
+
+* All data are owned by *default* tenant.
+* All logins are using the *default* tenant!
+
+[source,bash]
+----
+./start-onecx.sh
+----
+
+
+[#start-all-services]
+=== Start ALL Services
+*All* Docker services for OneCX are started. The necessary Docker volumes are created and required data are imported. Technically, the relevant services are marked with the *all* profile in the Docker Compose file used.
+
+[source,bash]
+----
+./start-onecx.sh -p all 
+----
+
+
+[#start-with-security]
+=== Start with Security, skipping Import
+The Docker services *essential* for OneCX are started with enabled secure authentication and also the tenant id is taken into account. This is the main precondition for tenant-compliant logins.
+
+The necessary Docker volumes are created but no data are imported.
+
+[source,bash]
+----
+./start-onecx.sh -s -x
+----
+
+[TIP]
+====
+If data needs to be imported in a tenant-specific manner, then use the script xref:./import.adoc[import-onecx.sh] with the appropriate options after starting the services.
+====
+
+
+include::../utilities.adoc[]
+
+
+// https://onecx.github.io/docs/documentation/current/onecx-local-env/scripts/stop.html
+= Stop local OneCX
+
+The *stop-onecx.sh* script is used to stop the OneCX Local Environment. It can be run from the root directory of the *onecx-local-env* repository. Here the command for stopping the essential services without removing data:
+
+[source,bash]
+----
+./stop-onecx.sh
+----
+
+== Available Options
+The script accepts several optional options to customize its behavior. Some options can be combined. The options are:
+
+-c::
+Cleans up all volumes associated with the OneCX Local Environment when stopping the services. This will remove all data stored in the volumes, so use this option with caution. (Default: disabled)
++
+Deletion only occurs if the service shutdown was completely successful, meaning no services are still running. This prevents data loss in case of problems during shutdown. This is the case, for example, if *all* OneCX services have been started, but only the *base* profile is stopped.
+
+-e::
+The edition of OneCX to stop. This must match the edition that was used to start the environment. Supported editions are:
+* `v2` (Default).
+* `v1`
+
+-h:: Displays help information about the script and its available options. If used then all other options are ignored.
+
+-p <profile-name>::
+The profile to use when stopping the environment. This must match the profile that was used to start the environment. The supported profiles are:
+* `base` (Default)
+* `all`
+
+
+== Examples
+
+=== Stop base and Cleanup
+The Docker services *essential* for OneCX will be terminated, including the deletion of all data. Technically, this involves deleting the Docker volumes used by OneCX.
+
+[source,bash]
+----
+./stop-onecx.sh -c
+----
+
+.Successful stopping with cleanup
+image::scripts/script_stop-onecx.sh_cleanup.png[]
+
+
+=== Stop ALL and Cleanup
+*All* Docker services for OneCX will be terminated, including the deletion of all data. Technically, this involves deleting the Docker volumes used by OneCX.
+
+[source,bash]
+----
+./stop-onecx.sh -p all -c
+----
+
+
+// https://onecx.github.io/docs/documentation/current/onecx-local-env/scripts/toggle-mfes.html
+= Integrate Microfrontends into OneCX
+
+The script *toggle-mfes.sh* integrates a locally running microfrontend into the OneCX environment, allowing it to interact with other microfrontends. This process is also reversible. 
+
+How it works::
+The script creates a small configuration file in Traefik, tailored to the local microfrontend. Traefik then forwards requests from the Docker network to the external local microfrontend.
+The script can be run from the root directory of the *onecx-local-env* repository.
++
+The Traefik configuration files are stored in `init-data/traefik/active/`. Traefik immediately detects any changes there, no extra restart is necessary.
+
+.Command to list the currently integrated microfrontends:
+[source,bash]
+----
+./toggle-mfes.sh  -l
+----
+
+.List of integrated Microfrontends
+image::scripts/script_toggle-mfes.sh_list.png[width=550]
+
+.Empty List - No Integrated Microfrontends
+image::scripts/script_toggle-mfes.sh_list-empty.png[]
+
+
+== Precondition
+Before a microfrontend can be successfully integrated into OneCX, it must be started. It is recommended to start the microfrontend in the following way. In the following examples, *6021* is used as the port where the microfrontend is running locally. Adjust the port as needed.
+
+.Start Angular **ng** Microfrontend on port 6021
+[source,bash]
+----
+npm run start -- --port 6021 --host 0.0.0.0 --disable-host-check --public-host=http://localhost:6021
+----
+
+.Start Angular **nx** Microfrontend on port 6021
+[source,bash]
+----
+npm run start -- --port=6021 --host 0.0.0.0 --disableHostCheck --publicHost=http://localhost:6021
+----
+
+[NOTE]
+====
+Please check the microfrontend is up and running by accessing the *public host URL* in Browser.
+[source,text]
+----
+http://localhost:6021/remoteEntry.js
+----
+The *remoteEntry.js* should be loaded - the content is displayed. +
+The *./toggle-mfes.sh* script does not check this!
+====
+
+
+== Available Options
+The script accepts multiple options to customize its behavior; one of each is required. +
+*All options may only be used separately!*
+
+The options are:
+
+-a <app-name>[:<app-port>[:<app-path>]]::
+Integrate one or more local microfrontends (app-name). In addition to the microfrontend name, you can optionally specify a port (app-port) and path (app-path). The default port is *4200*. See example section below. +
+If the microfrontend is one of OneCX Core products and no port is specified then predefined ports are used.
+
+-c:: Cleanup, remove all existing configurations
+
+-d <app-name>[:<app-port>]::
+Deintegrate one or more local Microfrontends. See example section below.
++
+[IMPORTANT]
+====
+. During deintegration, the same port must be specified as was specified during integration.
+. Deintegrate your microfrontend before stopping it, otherwise Traefik will continue to route requests to a non-existing service. There is no failover mechanism. See xref:#routing-and-prioritize[section below] for details.
+====
+
+-h:: Display this help and exit
+
+-l::  List of currently integrated local microfrontends
+
+
+== Examples
+
+=== Integrate my App with specific path
+The local microfrontend *my-app* runs on `http://localhost:4200` (standard Angular). +
+`/my-app-path` is the path under which the microfrontend is accessible within OneCX.
+
+.Integrate *my-app* on standard port *4200* (not extra specified) with specific path */my-app-path*
+[source,bash]
+----
+./toggle-mfes.sh  -a my-app::/my-app-path
+----
+
+.Successful integrated "my-app"
+image::scripts/script_toggle-mfes.sh_activate-my-app.png[]
+
+
+=== Integrate several Apps
+Integrate *workspace* on standard port *5025* AND *user-profile* on port *5027*. +
+Since no path is specified, the default paths are used, e.g. */mfe/workspace*
+
+.Integrate *workspace* and *user-profile* with specific ports
+[source,bash]
+----
+./toggle-mfes.sh  -a workspace user-profile:5027
+----
+
+.Successful integrated Microfrontends
+image::scripts/script_toggle-mfes.sh_activate.png[]
+
+
+=== Integrate OneCX Shell
+The integration of the shell requires a special path mapping. Hereby the path is not completely stripped. Define the strip path to be used at the end. 
+
+.Integrate OneCX Shell with specific path mapping
+[source,bash]
+----
+./toggle-mfes.sh  -a shell::/onecx-shell/:/
+----
+
+.Successful integrated OneCX Shell
+image::scripts/script_toggle-mfes.sh_activate-shell.png[]
+
+[NOTE]
+Because OneCX Shell is a microfrontend with a special role in OneCX it have to be started with a specific command as well.
+
+.Start Shell on default port 4200
+[source,bash]
+----
+npm run start:local-env
+----
+
+.Start Shell on a specific port (for example 5000)
+[source,bash]
+----
+npm run start:local-env -- --port=5000 --public-host=http://localhost:5000
+----
+
+=== Deintegrate my App
+The *-d* option allows you to undo an integration. The same rule applies to the port: if the port is not *4200*, it must be specified.
+
+.Deintegrate *my-app* running on port *12345*
+[source,bash]
+----
+./toggle-mfes.sh  -d my-app:12345
+----
+
+.Successful deintegration
+image::scripts/script_toggle-mfes.sh_deactivate.png[]
+
+
+=== Deintegrate ALL Apps
+The Traefik configurations are being cleaned up: All specific configuration files for the Microfrontend integration are being deleted.
+
+[source,bash]
+----
+./toggle-mfes.sh  -c
+----
+
+.Reset all Microfrontend configurations in Traefik
+image::scripts/script_toggle-mfes.sh_cleanup.png[]
+
+[CAUTION]
+====
+*Microfrontends integrated* using the methods described above *take priority* over those run via Docker Compose. If the microfrontends started with Docker Compose are needed again, the locally integrated microfrontends must first be deintegrated using the *-d* option.
+A failover mechanism is not implemented due to differing path reductions.
+====
+
+
+[#routing-and-prioritize]
+== Routing & Priorities
+
+As described earlier, Traefik is responsible for routing. Each route is assigned a *priority*, which Traefik derives by default from the length of the rule: the longer the rule, the higher the priority. To avoid routing collisions, the *local microfrontends are configured with a significantly higher priority*.
+
+This means you can run multiple microfrontends with the same routing rule in parallel and still control which microfrontend is used in OneCX. This is very useful if you want to use locally running microfrontends without having to stop the corresponding service in Docker Compose.
+
+The Traefik configuration generated when integrating a microfrontend (see above) sets a significantly higher priority for this route, so that the local microfrontend is used preferentially.
+
+
+=== Example: Prioritize local Microfrontend
+In this example, the OneCX Workspace microfrontend is running both in Docker Compose (Service: *onecx-workspace-ui*) and locally (Service: *local_workspace*). The local instance is used preferentially because it has a *higher* priority (*323*) than the Docker Compose instance (*52*).
+
+
+.Example routing for OneCX Workspace microservices
+image::scripts/script_toggle-mfes.sh_priotize-routes.png[]
+
+
+// https://onecx.github.io/docs/documentation/current/onecx-local-env/scripts/update-images.html
+= Update local Docker images
+
+To run a local OneCX instance, Docker images with the latest version are downloaded and used. Over time, these images become outdated, meaning that even if a newer version is available, the old version is still being used locally. Check versions with script xref:./check-images.adoc[check-images.sh].
+
+The *update-images.sh* script is used to renew local Docker images and removing orphaned images. It can be run from the root directory of the *onecx-local-env* repository.
+
+.Command to display the available options:
+[source,bash]
+----
+./update-images.sh -h
+----
+
+[TIP]
+====
+Before updating the images, it is recommended to check the current versions of the local Docker images using the script xref:./check-images.adoc[check-images.sh] and stopping the local OneCX instance using xref:./stop.adoc[stop-onecx.sh] to prevent potential issues with running containers during the update process. +
+Run the script with the parameter `*-c*` to clean up orphaned images - can be done in combination with updating.
+====
+
+
+== Available Options
+The script accepts several optional options to customize its behavior. Some options can be combined.
+
+The available options are:
+
+-a::
+Update all images, ignoring name filter (if option *-n* is also used). +
+If used in combination with *-c* then all orphaned images and stopped containers are removed.
+
+-c::
+Cleaned up orphaned images which are tagged with *<none>* or with status *Exited*. +
+Can be used in combination with *-a* (all images are affected) or with *-n* (only images matching the name filter are affected). +
+Basically, the deletion is only possible if the image is not in use. If so then stop the appropriate container first and try again.
+
+-h::
+Displays help information about the script and its available options. If used then all other options are ignored.
+
+-n <text>::
+Name filter, update images which have <text> into image name
+
+
+== Examples
+
+=== Update Traefik Image
+The Docker which have *traefik* in image name are pulled from remote registry and updated locally. In case some orphaned images are found then these are removed too.
+
+[source,bash]
+----
+./update-images.sh  -n traefik -c
+----
+
+.Successful update with name filter and cleanup
+image::scripts/script_update-images.sh_traefik-updated.png[]
+
+=== Cleanup only
+Started without any name filter will remove all orphaned images. No additional confirmation is required.
+
+.Excerpt from the list of orphaned images
+image::scripts/script_check-images.sh_none-images.png[]
+
+[source,bash]
+----
+./update-images.sh  -c
+----
+
+The deletion is only possible if the image is not in use. If so then stop the appropriate container first and try again.
+
+.Image deletion failed
+image::scripts/script_update-images.sh_rm-image-failed.png[]
+
+.Image deletion successful after stopping the container
+image::scripts/script_update-images.sh_rm-image-successful.png[]
+
+=== Update all images and cleanup
+With option *-a* all images are updated, ignoring name filter. With option *-c* all orphaned images are removed. No additional confirmation is required.
+
+[source,bash]
+----
+./update-images.sh  -a -c
+----

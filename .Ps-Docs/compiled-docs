@@ -1,0 +1,3038 @@
+Compiled Docs
+Note: Also if you need anything more use @about_onecx mcp tool if any question or need more documentation
+
+
+https://onecx.github.io/docs/documentation/current/onecx-docs-start/create_application.html
+= Creating a OneCX Application
+
+This guide walks you through the process of creating a simple OneCX Application using the {onecx_app_generator_ref} and integrating it into your local OneCX environment.
+
+== Introduction
+
+What is a OneCX Application?::
+A OneCX Application is a set of microfrontends and services that together provide specific functionality within the OneCX platform. It typically consists of a user interface (a microfrontend) and backend services that support its operations. A OneCX Application is designed to be modular, scalable, and easily integrable with other applications within the OneCX ecosystem.
++
+.See also:
+* {onecx_docs_overview_app_ref} provides more information about the concept of OneCX Applications.
+* {onecx_docs_apps_ref} for a list of existing OneCX Applications with details.
+
+A OneCX Application consists typically of the following components.
+
+Application Components::
+* *onecx-hello-world-ui* => Microfrontend +
+  The user interface (UI) component that displays the welcome message.
+* *onecx-hello-world-bff* => Microservice +
+  Backend For Frontend (BFF) service that handles any backend logic required by the UI.
+* *onecx-hello-world-svc* => Microservice +
+  Backend Service (SVC): A simple service that could be used to log visits to the application (optional for this basic example).
+
+In some cases it consists only of a microfrontend without any backend services or only backend services without a UI component.
+
+== Prerequisites
+Before you begin, ensure you have the following prerequisites in place:
+
+* A working OneCX Local Environment set up. If you haven't done this yet, follow the instructions in the {onecx_local_env_setup_ref}.
+* Node.js, npm, nx installed on your development machine.
+* Familiarity with {angular_link} or {react_link}, as the microfrontends in OneCX are typically built using these frameworks.
+* You need about 1GB of free disk space and it may take a few minutes to download and set up all necessary dependencies.
+* Get and prepare the {onecx_app_generator_ref}: +
+  Install it globally or use *npx* to run it without installation.
+** The *onecx-nx-plugins* repository needs to be cloned into a folder on the local machine/inside WSL2.
++
+[source,bash]
+----
+git clone https://github.com/onecx/onecx-nx-plugins.git
+----
+** Navigate into the cloned repository and install the dependencies:
++
+[source,bash]
+----
+cd onecx-nx-plugins
+npm install
+----
+** Build the OneCX App Generator:
++
+[source,bash]
+----
+npm run build
+----
+
+
+== Create the UI Component
+In this tutorial, we will create a simple OneCX application with {angular_link} called "Hello World" that displays a welcome message to users.
+
+
+=== Generate UI Component
+First, we will generate the *onecx-hello-world-ui* using the OneCX App Generator.
+
+. Open a terminal and navigate to the directory where you want to create your OneCX Application.
+. Run the OneCX App Generator command:
++
+.Create a new UI component using the ngrx template:
+[source, bash]
+----
+npx @onecx/create-workspace ngrx onecx-hello-world-ui
+----
+. Follow the prompts to provide details about your app, such as its name, description, and any specific configurations you want to include.
+. Once the generation process is complete, navigate into your new `onecx-hello-world-ui` directory and update dependencies:
++
+[source, bash]
+----
+cd onecx-hello-world-ui
+npm install
+----
+
+=== Fixing UI Component
+The generated *onecx-hello-world-ui* component requires a few adjustments to align with our naming conventions and to ensure proper integration with the backend services.
+
+. Renaming and fixing OpenAPI file:
+** Navigate to the `src/assets/swagger/` folder inside the *onecx-hello-world-ui* project.
+** Rename the directory `swagger`  to `api`.
+** Rename the file `onecx-hello-world-ui-bff.yaml` to `openapi-bff.yaml`.
+** Open the file and replace all occurrences of `onecx-hello-world-ui-bff` with `onecx-hello-world-bff`.
+** Save the changes
+** Navigate back to the `root` folder of the *onecx-hello-world-ui* project.
+** Open the file `package.json` and replace all occurrences of `src/assets/swagger/onecx-hello-world-bff.yaml` with `src/assets/api/openapi-bff.yaml`.
+** Save the changes
+. Generate the API client code based on the updated OpenAPI specification:
++
+.Generate the API client code:
+[source, bash]
+----
+npm run apigen
+----
+. Fixing Docker file:
+** Open the `Dockerfile` located in the root of the *onecx-hello-world-ui* project.
+** Locate the line that sets the `BFF_URL` environment variable.
+** Change the value from `http://onecx-hello-world-ui-bff:8080/` to `http://onecx-hello-world-bff:8080/`.
+** Save the changes.
+
+. Fixing Proxy configuration:
+** Open the `proxy.conf.js` file located in the root of the *onecx-hello-world-ui* project.
+** Locate the `target` property under the `/bff` proxy configuration.
+** Change the value from `http://onecx-hello-world-ui-bff` to `http://onecx-hello-world-bff`.
+** Save the changes.
+
+. Fixing the *app name* throughout the project:
+.. In the Webpack configuration:
+* Open the `webpack.config.js` file located in the root of the *onecx-hello-world-ui* project.
+* Locate the `name` property in the `ModuleFederationPlugin` configuration.
+* Change the value from `onecx-hello-world-ui-app` to `onecx-hello-world-ui`.
+* Save the changes.
+.. In the Typescript configuration:
+* Open the `tsconfig.app.json` file located in the root of the *onecx-hello-world-ui* project.
+* Locate the line with `.remote-module` property within the `files` section.
+* Change the value from `onecx-hello-world-ui-app.remote.module.ts` to `onecx-hello-world-ui.remote.module.ts`.
+* Save the changes.
+.. In the Bootstrap configuration:
+* Open the `bootstrap.ts` file located in the `src` of the *onecx-hello-world-ui* project.
+* Locate the line with import the UI module.
+* Change the value from `onecx-hello-world-ui-app.remote.module.ts` to `onecx-hello-world-ui.remote.module.ts`.
+* Save the changes.
+.. In the App module configuration:
+* Open the `app.module.ts` file located in the `src/app` of the *onecx-hello-world-ui* project.
+* Locate the line with imports the `PortalCoreModule`.
+* Change the value from `onecx-hello-world-ui-app` to `onecx-hello-world-ui`.
+* Save the changes.
+.. Change the remote module file name:
+* Rename the file `onecx-hello-world-ui-app.remote.module.ts` to `onecx-hello-world-ui.remote.module.ts` in the `src/app` of the *onecx-hello-world-ui* project.
+
+. Fixing the *module name* inside the remote module file:
+.. Open the `onecx-hello-world-ui.remote.module.ts` file located in the `src/app` of the *onecx-hello-world-ui* project.
+* Locate the `export class` declaration.
+* Change the value from `OnecxHelloWorldUiModule` to `OneCXHelloWorldModule`.
+* Save the changes.
+.. In the Bootstrap configuration:
+* Open the `bootstrap.ts` file located in the `src` of the *onecx-hello-world-ui* project.
+* Locate the 2 affected lines where the module is referenced.
+* Change the value from `OnecxHelloWorldUiModule` to `OneCXHelloWorldModule`.
+* Save the changes.
+.. In the Webpack configuration:
+* Open the `webpack.config.js` file located in the root of the *onecx-hello-world-ui* project.
+* Locate the exposed module name
+* Change the value from `OnecxHelloWorldUiModule` to `OneCXHelloWorldModule`.
+* Save the changes.
+.. In the values.yaml:
+* Open the `values.yaml` file located in the `helm` directory of the *onecx-hello-world-ui* project.
+* Locate the exposed module name
+* Change the value from `OnecxHelloWorldUiModule` to `OneCXHelloWorldModule`.
+* Save the changes.
+.. Change the *app title*:
+* Open the `index.html` file located in the `src` of the *onecx-hello-world-ui* project.
+* Locate the `<title>` tag.
+* Change the value from *OnecxHelloWorldUi App UI* to *OneCX Hello World UI*.
+* Save the changes.
+
+. Fixing the *routing path* :
+** Open the `values.yaml` file located in the `helm` directory of the *onecx-hello-world-ui* project.
+** Locate the `path` property under the `routing` configuration.
+** Change the value from `/mfe/onecxHelloWorldUi/` to `/mfe/helloworld/`.
+** Save the changes.
+
+Your *onecx-hello-world-ui* component is now set up.
+
+
+=== Testing UI Component
+After developing your UI component, it's important to test it locally to ensure everything works as expected before deploying it within your OneCX environment.
+
+.Start the UI component locally with:
+[source, bash]
+----
+nx serve onecx-hello-world-ui --proxy-config=proxy.conf.js
+----
+Now you can see the UI works with accessing the remoteEntry.js via `http://localhost:4200/remoteEntry.js`. 
+
+or alternatively,
+
+.Use the start script and a custom port:
+[source, bash]
+----
+npm run start -- --port=6021 --host 0.0.0.0 --disableHostCheck --publicHost=http://localhost:6021
+----
+This will start the UI component on port 6021, and you can access it at `http://localhost:6021/remoteEntry.js`.
+
+.Successfully running UI component on port 6021
+image::screenshot_successful-start-local-mfe.png[]
+
+////
+. Once you are satisfied with your UI component, you can build it for production using:
++[source, bash]
+----
+nx build onecx-hello-world-ui
+----
+. This will create a production-ready build of your UI component in the `dist` directory. You can then proceed to integrate it with the backend services and deploy it within your OneCX environment.   
+
+=== Step 2: Generate BFF Service
+Next, we will generate the *onecx-hello-world-bff* service using the OneCX App Generator.
+////
+
+
+https://onecx.github.io/docs/documentation/current/onecx-docs-start/first-app/create_angular_app.html
+= Creating an OneCX Angular App
+
+:generator_base_url: xref:documentation:onecx-nx-plugins:generator
+:local_environment_url: xref:documentation:onecx-local-env:index.adoc
+
+[#general-overview]
+== General Overview
+
+After {local_environment_url}[setting up the OneCX Environment locally], you can begin creating your own application within this environment. This guide walks through the process of building a simple "Hello World" Angular app and integrating it into the OneCX environment.
+To integrate an application into the OneCX environment, it should follow the standard architecture consisting of three main services (ui, bff and svc).
+These services are consumed by the OneCX shell, which orchestrates and displays the UI components within the broader platform.
+
+
+[#creating-the-ui]
+== Creating the UI
+
+[#creating-basic-ui-structure]
+=== 1. Create the basic UI structure
+
+We start with creating the UI structure of our "Hello World" App by running the following commands using the custom OneCX generator.
+
+
+[#setup-new-angular-workspace]
+==== Setup New Angular Workspace
+
+First, we can generate the basic project structure and required files for the application.
+This includes necessary configuration and build files, initial Angular source code, generated API services, translation assets, Swagger specifications, environment settings and Helm deployment configurations.
+
+We can set up the new Angular workspace by running:
+
+[source,sh]
+----
+npx @onecx/create-workspace ngrx hello-world
+----
+NOTE: Details to generating a new OneCX Angular workspace can be found {generator_base_url}/create-app.adoc[here].
+
+Navigate into the newly created hello-world directory and install the packages with `npm install`. 
+
+[#adding-feature-module]
+==== Add a Feature Module
+
+Now we want to add a feature module to our application, that encapsulates the functionality of our new feature "hello". Therefore a new folder with the name of the feature module will be created in the `/src/app/` directory.
+
+This will be generated by running the following command:
+
+[source,sh]
+----
+nx generate @onecx/nx-plugin:feature hello
+----
+NOTE: Details to generating a feature module can be found {generator_base_url}/create-feature.adoc[here].
+
+[#adding-search-page]
+==== Add a Search Page
+
+Additionally we can add a search feature, that includes a table and allows users to search for an item in a certain column.
+The search page can be generated in the same way as the feature module:
+
+[source,sh]
+----
+nx generate @onecx/nx-plugin:search hello
+----
+NOTE: Details to generating a search page can be found {generator_base_url}/create-search.adoc[here].
+
+[#adding-details-page]
+==== Add a Details Page
+
+Now we can also create a details page for the items in the search results by running:
+
+[source,sh]
+----
+nx generate @onecx/nx-plugin:details hello
+----
+NOTE: Details to generating a details page can be found {generator_base_url}/details-page.adoc[here].
+
+[#adding-create-update-page]
+==== Add a Create-Update Dialog
+
+Additionally we can add a create and update dialog for creating and updating items on the page by running:
+
+[source,sh]
+----
+nx generate @onecx/nx-plugin:create-update hello
+----
+NOTE: Details to generating a create-update dialog can be found {generator_base_url}/create-update-dialog.adoc[here].
+
+The application can now be built, tested and started by running `npm run build`, `npm run test` and `npm start`.
+
+For further customization of the app, you can refer to the general xref:documentation:onecx-nx-plugins:index.adoc[OneCX App Generator] documentation.
+
+
+[#include-application-in-onecx-environment]
+=== 2. Include application in OneCX environment
+
+Now let's integrate the "Hello World" app into the OneCX environment using the onecx-local-env. *This section assumes your local environment is already set up and running*.
+
+
+[#synchronization]
+==== Synchronization
+
+In your hello-world UI folder, sync the app with your local environment (adjust the path to your `onecx-local-env`):
+
+[source,sh]
+----
+npx @onecx/local-env-cli sync ui hello-world /hello-world ./helm/values.yaml -e /path/to/onecx-local-env -n hello-world-ui
+----
+
+In this command:
+
+- `hello-world` refers to the product name.
+- `/hello-world` specifies the product's base path.
+- `./helm/values.yaml` is the path to the application's `values.yaml` file.
+- `-e /path/to/onecx-local-env` should be adjusted to the path of your local `onecx-local-env` repository.
+- `-n hello-world-ui` specifies the name of the microfrontend service.
+
+This command will adjust the files in your onecx-local-env to include the necessary information about the new application's UI.
+
+[#adding-menu-entry]
+==== Add Menu Entry
+
+Add a menu entry for the new application in the OneCX environment by running (adjust the path to your `onecx-local-env` again):
+
+[source,sh]
+----
+npx @onecx/local-env-cli menu create hello-world-ui /hello-world/hello "Hello World" -e /path/to/onecx-local-env
+----
+
+This command will create a new menu entry "Hello World" under Custom Applications with the path to the applications feature module `/hello-world/hello`.
+
+[#adding-to-docker-compose]
+==== Add the UI to Docker Compose
+
+Add the UI as an image to the `docker-compose.yaml` of your `onecx-local-env` with the following command (adjust the path to your `onecx-local-env` again):
+
+[source,sh]
+----
+npx @onecx/local-env-cli docker hello-world create hello-world helloWorld -e /path/to/onecx-local-env -s ui
+----
+
+In this command:
+- `hello-world` after `docker` refers to the name of the custom docker compose that will be created.
+- `hello-world` after `create` references the product name.
+- `helloWorld` is the name of the UI path as defined in the `values.yaml` of the application UI. In this case it is `helloWorld` as the routing path in the `values.yaml` is `/mfe/helloWorld/`.
+- `-e /path/to/onecx-local-env` should be adjusted to the path of your local `onecx-local-env` repository.
+- `-s ui` specifies that the service to be added is the UI.
+
+Now a `hello-world.docker-compose.yaml` should be created in the onecx-local-env containing an image for `hello-world-ui`.
+
+NOTE: More details to the onecx-local-env-cli can be found link:https://github.com/onecx/onecx-local-env-cli/[here].
+
+[#creating-the-bff]
+== Creating the BFF
+
+First clone the bff repository: `https://github.com/onecx/onecx-hello-world-bff.git` and navigate into the folder.
+
+As we did for the UI, we can sync the app with your local environment for the bff and add the bff to our hello-world.docker-compose.yaml as well. The src/main/helm/values.yaml path refers to the values.yaml file of the bff.
+
+[source,sh]
+----
+npx @onecx/local-env-cli sync bff hello-world /hello-world src/main/helm/values.yaml -e /path/to/onecx-local-env
+npx @onecx/local-env-cli docker hello-world create hello-world helloWorld -e /path/to/onecx-local-env -s bff
+----
+
+[#creating-the-svc]
+== Creating the SVC
+
+Now we can clone the svc repository: `https://github.com/onecx/onecx-hello-world-svc` and navigate into the folder.
+
+The same way as for the UI and BFF, we can sync the app with your local environment for the svc and add the svc to our hello-world.docker-compose.yaml as well. The src/main/helm/values.yaml path refers to the values.yaml file of the svc.
+
+[source,sh]
+----
+npx @onecx/local-env-cli sync svc hello-world /hello-world src/main/helm/values.yaml -e /path/to/onecx-local-env
+npx @onecx/local-env-cli docker hello-world create hello-world helloWorld -e /path/to/onecx-local-env -s svc
+----
+
+*Now that the services are created, the application can be run in the OneCX environment as described xref:./running_custom_apps_overview.adoc#running-and-testing-applications[here].*
+
+
+https://onecx.github.io/docs/documentation/current/onecx-docs-start/first-app/running_custom_apps_overview.html
+[#running-custom-apps-overview]
+= Running Custom Applications in OneCX
+
+After xref:./create_angular_app.adoc[creating a new application], we want to run it in our local environment. 
+This guide walks you through the process of setting up, running, testing, and removing custom applications in the OneCX environment. It covers different ways to achieve these tasks using a custom "Hello World" application as an example.
+
+Before you begin, please ensure your local OneCX environment is already set up and running correctly. For setup instructions, refer to the xref:documentation:onecx-local-env:index.adoc[onecx-local-env documentation].
+Additionally, make sure that entries for `hello-world-bff` and `hello-world-svc` are added to your system's hosts file (`C:\Windows\System32\drivers\etc\hosts` on Windows) the same way as it was done in the xref:documentation:onecx-local-env:setup.adoc[onecx-local-env setup].
+
+[#application-setup]
+== 1. Application Setup
+We first need to define our application, microservice, Ui Component and register the application in our workspace. There are two main approaches to add the necessary data. You can either create the import files and update the container definitions manually, or you can use the `onecx-local-env-cli` to automate the process. The recommended method depends on how your application was created:
+
+* If you used the OneCX generator as outlined in the xref:./create_angular_app.adoc[Getting Started guide], you can quickly set up your application using the `onecx-local-env-cli`. See the detailed steps here: xref:./app_setup_cli.adoc[Application Setup using OneCX CLI]
+
+* If your application was created manually or lacks the Helm structure provided by the OneCX generator, you can also manually create the setup in the `onecx-local-env`: xref:./app_setup_manual.adoc[Manual Application Setup].
+
+[#running-and-testing-applications]
+== 2. Running and Testing Applications
+After the necessary import and docker files were created as explained in step 1, you can run and test the application in the OneCX Shell in one of the following ways.
+
+* You can use Docker's build context to build the image from your local application each time you run Docker Compose. With the build context specified in `docker-compose.yaml`, Docker will automatically build the image from the local Dockerfile of your application: xref:./image_build_automatic.adoc[Automatic Image Build]
+
+* You can also manually build the Docker image from your local application and use this local image in your `onecx-local-env`. This method avoids potential caching issues that may arise when using the automatic image build: xref:./image_build_manual.adoc[Manual Image Build]
+
+[#local-applications]
+== 3. Local Applications
+In addition to the methods mentioned above, you can configure your application for hot reloading to speed up development and testing.
+
+* If you want to your application to reflect changes immediately without rebuilding the image each time and only starting the application once, you can set up your application for hot reloading: xref:./enable_hot_reload.adoc[Hot Reload]
+
+* You can also run and test multiple local applications simultaneously: xref:./run_multiple_apps.adoc[Multiple Applications]
+
+[#testing-changes-to-existing-onecx-core-apps]
+== 4. Testing Changes to Existing OneCX Core Apps
+You can also test changes to existing OneCX core applications in your local OneCX environment: xref:./testing_existing_core_apps.adoc[Testing Core Apps]
+
+[#removal-of-custom-app]
+== 5. Removal of Custom App
+If you need to remove a custom app from the environment, you can do so by following the steps outlined in xref:./app_removal.adoc[Removal of Custom App].
+
+
+
+
+https://onecx.github.io/docs/documentation/current/onecx-docs-start/first-app/app_setup_cli.html
+[#app-setup-onecx-local-env-cli]
+= Creating Import Files and Docker Compose Entry using the onecx-local-env-cli
+
+The recommended way to set up the custom application in the OneCX environment is to use the `onecx-local-env-cli` to automate the creation of import files and the docker compose entry.
+
+NOTE: This method requires a correct Helm setup for your application as it is generated with the OneCX generator. If Helm values are missing or incorrect, the CLI may not work as expected.
+
+To sync the app with your local environment, navigate to your hello-world UI folder and run:
+
+[source,sh]
+----
+npx @onecx/local-env-cli sync ui hello-world /hello-world ./helm/values.yaml -e /path/to/onecx-local-env -n hello-world-ui
+----
+
+In this command:
+
+- `hello-world` refers to the product name.
+- `/hello-world` specifies the product's base path.
+- `./helm/values.yaml` is the path to the application's `values.yaml` file.
+- `-e /path/to/onecx-local-env` should be adjusted to the path of your local `onecx-local-env` repository.
+- `-n hello-world-ui` specifies the name of the microfrontend service.
+
+This command will update your onecx-local-env with the necessary information about your new application's UI.
+
+To add the UI as an image to the `docker-compose.yaml` of your onecx-local-env, run (adjust the path as needed):
+
+[source,sh]
+----
+npx @onecx/local-env-cli docker hello-world create hello-world helloWorld -e /path/to/onecx-local-env -s ui
+----
+
+In this command:
+- `hello-world` after `docker` refers to the name of the custom docker compose that will be created.
+- `hello-world` after `create` references the product name.
+- `helloWorld` is the name of the UI path as defined in the `values.yaml` of the application UI. In this case it is `helloWorld` as the routing path in the `values.yaml` is `/mfe/helloWorld/`.
+- `-e /path/to/onecx-local-env` should be adjusted to the path of your local `onecx-local-env` repository.
+- `-s ui` specifies that the service to be added is the UI.
+
+A `hello-world.docker-compose.yaml` should now be created in the onecx-local-env, containing an image for `hello-world-ui`.
+
+NOTE: In the same way as for the UI we can also handle the BFF and SVC of our application by using the commands in the xref:./create_angular_app.adoc#creating-the-bff[General Getting Started guide].
+
+For more details regarding the usage of the CLI, see the link:https://github.com/onecx/onecx-local-env-cli/[onecx-local-env-cli README].
+
+Now all necessary files are created and you can run your application in the OneCX environment as described in xref:./running_custom_apps_overview.adoc#running-and-testing-applications[Running and Testing Applications].
+
+
+
+https://onecx.github.io/docs/documentation/current/onecx-docs-start/first-app/app_setup_manual.html
+[#manual-application-setup]
+= Manually Creating Import Files and Docker Compose Entry
+
+You can set up the custom application in OneCX by manually creating the required JSON files in the imports folder and updating the container definitions in the onecx-local-env repository.
+
+[#creating-import-files]
+== Create Import Files
+
+=== 1. Add Assignments
+First, we need to add the permission assignments for our application by adding the following code under `assignments` in *imports > assignments > onecx.json*.
+
+.onecx.json
+[source,json]
+----
+"hello-world": {
+  "hello-world-ui": {
+    "onecx-admin": {
+      "HELLO": [
+        "CREATE",
+        "EDIT",
+        "DELETE",
+        "SAVE",
+        "IMPORT",
+        "EXPORT",
+        "VIEW",
+        "SEARCH",
+        "BACK"
+      ]
+    }
+  },
+  "onecx-hello-world-bff": {
+    "onecx-admin": {
+      "hello": [
+        "read",
+        "write",
+        "delete"
+      ]
+    }
+  }
+}
+----
+
+[#create-microfrontend-file]
+=== 2. Create Microfrontend File
+Then we need to define our application by creating the following file in *imports > product-store > microfrontends*.
+
+NOTE: The file name must match the shown pattern consisting of *product name* (here: hello-world), *microservice*(hello-world-ui) and *UI component*(main).
+
+.hello-world_hello-world-ui_main.microfrontend.json
+[source,json]
+----
+{
+  "appVersion": "xxx",
+  "appName": "hello-world",
+  "description": "OneCX HelloWorld Module",
+  "remoteBaseUrl": "/mfe/helloWorld/",
+  "remoteEntry": "/mfe/helloWorld/remoteEntry.js",
+  "note": "OneCX HelloWorld UI module auto import via MF operator",
+  "exposedModule": "./HelloWorldModule",
+  "technology": "WEBCOMPONENTMODULE",
+  "remoteName": "hello-world",
+  "tagName": "hello-world-webcomponent",
+  "type": "MODULE",
+  "deprecated": false,
+  "undeployed": false
+}
+----
+
+* The `appName` matches the product name.
+* The `remoteBaseUrl` should match the routing path in your app's helm `values.yaml`.
+* The `exposedModule` should match the module name, that is exposed in your app's webpack config.
+* The `tagName` can be found in the remoteModule ts file in the ngDoBootstrap() function.
+
+[#create-permissions-file]
+=== 3. Create Permissions File
+We also need to add the permissions for our application by creating the following file in *imports > product-store > permissions*.
+
+NOTE: The file name must match the shown pattern consisting of *product name* (here: hello-world) and *microservice*(hello-world-ui).
+
+.hello-world_hello-world-ui.json
+[source,json]
+----
+{
+  "name": "hello-world-ui",
+  "permissions": [
+    {
+      "resource": "HELLO",
+      "action": "CREATE"
+    },
+    {
+      "resource": "HELLO",
+      "action": "EDIT"
+    },
+    {
+      "resource": "HELLO",
+      "action": "DELETE"
+    },
+    {
+      "resource": "HELLO",
+      "action": "SAVE"
+    },
+    {
+      "resource": "HELLO",
+      "action": "IMPORT"
+    },
+    {
+      "resource": "HELLO",
+      "action": "EXPORT"
+    },
+    {
+      "resource": "HELLO",
+      "action": "VIEW"
+    },
+    {
+      "resource": "HELLO",
+      "action": "SEARCH"
+    }
+  ]
+}
+----
+
+The permissions need to match the permissions defined in your applications `values.yaml`.
+
+[#create-microservice-file]
+=== 4. Create Microservice File
+Then the UI microservice needs to be defined by creating the following file in *imports > product-store > microservices*.
+
+NOTE: The file name must match the shown pattern consisting of *product name* (here: hello-world) and *microservice*(hello-world-ui).
+
+.hello-world_hello-world-ui.json
+[source,json]
+----
+{
+    "version": "xxx",
+    "description": "hello-world-ui",
+    "name": "hello-world-ui",
+    "type": "ui"
+}
+----
+
+* The name needs to match the name of the microservice.
+
+For BFF and SVC microservices, similar files need to be created in the same folder. The same pattern as for the UI applies, just replace *microservice* with the corresponding product names "hello-world-bff" and "hello-world-svc" and type to "bff" or "svc".
+
+[#create-product-definition]
+=== 5. Create Product Definition
+We also need to add the product definition by creating the following file in *imports > product-store > products*.
+
+NOTE: The file name must match the *product name* (here: hello-world).
+
+.hello-world.json
+[source,json]
+----
+{
+    "version": "xxx",
+    "description": "hello-world",
+    "basePath": "/hello-world",
+    "displayName": "hello-world",
+    "iconName": "pi-briefcase"
+}
+----
+
+* The `basePath` defines the URL path where the application will be accessible later.
+
+[#register-application-in-workspace]
+=== 6. Register Application in Workspace
+To register the application in the workspace, we can add it to the `products` array in the `onecx_admin.json` file located in *imports > workspace*.
+
+.onecx_admin.json
+[source,json]
+----
+{
+    "productName": "hello-world",
+    "baseUrl": "/hello-world",
+    "microfrontends": [
+        {
+            "appId": "hello-world-ui",
+            "basePath": "/"
+        }
+    ]
+},
+----
+
+* The `productName`, `basePath` and `appId` should match the values we used in the files we created before.
+
+[#creating-docker-compose]
+== Create Docker Compose Entry
+Now we need to add the container definition for our application by creating a new `hello-world.docker-compose.yaml` at the same level as the `docker-compose.yaml`. This file should define the image, environment variables, labels for traefik, network, and profiles. For our Hello World app, it looks like this:
+
+.hello-world.docker-compose.yaml
+[source,yaml]
+----
+include:
+  - docker-compose.yaml
+services:
+  hello-world-ui:
+    image: ${HELLO_WORLD_UI}
+    environment:
+      APP_BASE_HREF: /mfe/helloWorld/
+      APP_ID: hello-world-ui
+      PRODUCT_NAME: hello-world
+    depends_on:
+      hello-world-bff:
+        condition: service_healthy
+    labels:
+      - traefik.http.services.hello-world-ui.loadbalancer.server.port=8080
+      - traefik.http.routers.hello-world-ui.rule=Host(`local-proxy`)&&PathPrefix(`/mfe/helloWorld/`)
+    networks:
+      - default
+    profiles:
+      - base
+      - hello-world
+      - hello-world-ui
+      - all
+----
+
+* The environment variables should match the values we defined in the import files. (APP_BASE_HREF should match remoteBaseUrl in the microfrontend file)
+* The `labels` section configures traefik for routing. The service will be accessible via port 8080 (the default exposed port for nginx) and the `PathPrefix` value should match the `APP_BASE_HREF`.
+* The `profiles` section specifies which profiles the service can be started with. For further explanation of the profiles see the xref:documentation:onecx-local-env:index.adoc[onecx-local-env documentation].
+
+Under the `services` section, you can also define the BFF and SVC of your application in a similar way as the hello-world-ui service:
+
+.hello-world.docker-compose.yaml
+[source,yaml]
+----
+  hello-world-bff:
+    image: ${HELLO_WORLD_BFF}
+    environment:
+      ONECX_PERMISSIONS_PRODUCT_NAME: hello-world
+    healthcheck:
+      test: curl --head -fsS http://localhost:8080/q/health
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      hello-world-svc:
+        condition: service_healthy
+    labels:
+      - traefik.http.services.hello-world-bff.loadbalancer.server.port=8080
+      - traefik.http.routers.hello-world-bff.rule=Host(`hello-world-bff`)
+    env_file:
+      - common.env
+      - bff.env
+    networks:
+      - default
+    profiles:
+      - base
+      - hello-world
+      - hello-world-ui
+      - all      
+  hello-world-svc:
+    image: ${HELLO_WORLD_SVC}
+    environment:
+      QUARKUS_DATASOURCE_USERNAME: hello_world
+      QUARKUS_DATASOURCE_PASSWORD: hello_world
+      QUARKUS_DATASOURCE_JDBC_URL: jdbc:postgresql://postgresdb:5432/hello_world?sslmode=disable
+    healthcheck:
+      test: curl --head -fsS http://localhost:8080/q/health
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      postgresdb:
+        condition: service_healthy
+    labels:
+      - traefik.http.services.hello-world-svc.loadbalancer.server.port=8080
+      - traefik.http.routers.hello-world-svc.rule=Host(`hello-world-svc`)
+    env_file:
+      - common.env
+      - svc.env
+    networks:
+      - default
+    profiles:
+      - base
+      - hello-world
+      - all
+----
+
+Now all necessary files are created and you can run your application in the OneCX environment as described in xref:./running_custom_apps_overview.adoc#running-and-testing-applications[Running and Testing Applications].
+
+
+
+
+https://onecx.github.io/docs/documentation/current/onecx-docs-start/first-app/image_build_automatic.html
+[#automatic-image-build]
+= Automatic Image Build
+
+If you want to develop or test local changes, you can use Docker's build context to build the image from your local source code each time you run `docker compose`. With the build context from your local application, Docker will automatically build the image.
+
+To use this approach, first update your `hello-world.docker-compose.yaml` to use a `build` section instead of an image reference. Adjust the `context` to your local app path and reference the application's Dockerfile as shown in the examples below. For the UI it would look like this:
+
+[source,yaml]
+----
+include:
+  - docker-compose.yaml
+services:
+  hello-world-ui:
+    # image: ${HELLO_WORLD_UI}
+    build:
+      context: /path/to/hello-world-ui
+      dockerfile: Dockerfile
+    environment:
+      APP_BASE_HREF: /mfe/helloWorld/
+      APP_ID: hello-world-ui
+      PRODUCT_NAME: hello-world
+    depends_on:
+      hello-world-bff:
+        condition: service_healthy
+    labels:
+      - traefik.http.services.hello-world-ui.loadbalancer.server.port=8080
+      - traefik.http.routers.hello-world-ui.rule=Host(`local-proxy`)&&PathPrefix(`/mfe/helloWorld/`)
+    networks:
+      - default
+    profiles:
+      - base
+      - hello-world
+      - hello-world-ui
+      - all
+----
+
+If you want to use the build context for the BFF service, it would look like this:
+
+[source,yaml]
+----
+...
+  hello-world-bff:
+    # image: ${HELLO_WORLD_BFF}
+    build:
+      context: /path/to/hello-world-bff
+      dockerfile: Dockerfile
+  ...
+----
+
+In order for the Svc to use the build context, it must be customized in the same way:
+
+[source,yaml]
+----
+...
+  hello-world-svc:
+    # image: ${HELLO_WORLD_SVC}
+    build:
+      context: /path/to/hello-world-svc
+      dockerfile: Dockerfile
+    ...
+----
+
+Now you can import the initial data in the `onecx-local-env` by running:
+
+[source,sh]
+----
+./import-onecx.sh
+----
+
+The corresponding application can now be built, e.g. with `npm run build` for the UI, and the `onecx-local-env` can be started and built with:
+
+[source,sh]
+----
+docker compose -f hello-world.docker-compose.yaml --profile base up -d --build
+----
+
+Your application will now be built and available at `http://local-proxy/onecx-shell/admin/helloWorld/hello` in the OneCX Shell. If you make changes in your application, you need to rebuild it with `npm run build` and restart the `onecx-local-env` with the command above.
+
+*This method of running the application may lead to potential caching issues that could prevent changes from being reflected immediately.*
+
+
+
+
+https://onecx.github.io/docs/documentation/current/onecx-docs-start/first-app/image_build_manual.html
+[#manual-image-build]
+= Manual Image Build
+
+To avoid caching issues and ensure the latest code is always used, it is recommended to manually build the Docker image after building your app locally. This can be done for the UI, BFF, and SVC.
+
+First, go to your application and *remove any cache and build folders to avoid using cached images*. In the UI you should for example delete the `dist` folder and nx cache by running the following command:
+
+[source,sh]
+----
+rm -rf .nx/cache ./dist
+----
+
+Then you can build your application (e.g. `npm run build` for the UI) and create a local docker image with e.g.:
+
+[source,sh]
+----
+docker build --no-cache -t hello_world_ui_local .
+----
+
+Now in the `onecx-local-env` navigate to the .env file at the same level as your `hello-world.docker-compose.yaml`. If the .env file does not exist, please create it first.
+If you want to use a local image for the UI, the image name for `HELLO_WORLD_UI` should match the name you used when building the local docker image in your application. So in this case, the images would look like this:
+
+[source,env]
+----
+HELLO_WORLD_SVC=${DOCKER_REPO}/hello-world-svc:main-native
+HELLO_WORLD_BFF=${DOCKER_REPO}/hello-world-bff:main-native
+HELLO_WORLD_UI=hello_world_ui_local:latest
+----
+
+If you want to build local images for the BFF or SVC, you can update the corresponding image names in the .env file in the same way, so it would look like this for the BFF:
+
+[source,env]
+----
+HELLO_WORLD_SVC=${DOCKER_REPO}/hello-world-svc:main-native
+HELLO_WORLD_BFF=hello_world_bff_local:latest
+HELLO_WORLD_UI=${DOCKER_REPO}/hello-world-ui:main
+----
+
+and like this for the SVC:
+
+[source,env]
+----
+HELLO_WORLD_SVC=hello_world_svc_local:latest
+HELLO_WORLD_BFF=${DOCKER_REPO}/hello-world-bff:main-native
+HELLO_WORLD_UI=${DOCKER_REPO}/hello-world-ui:main
+----
+
+Now you can also import the initial data by running:
+
+[source,sh]
+----
+./import-onecx.sh
+----
+
+and start the service with:
+
+[source,sh]
+----
+docker compose -f hello-world.docker-compose.yaml --profile base up -d
+----
+
+Now the local image is used and changes in the application should be reflected under `http://local-proxy/onecx-shell/admin/helloWorld/hello` after rebuilding the image of the application with `docker build --no-cache -t helloworld_local .`.
+
+If you want to your application to reflect changes immediately without rebuilding the image each time, you can set up your application for hot reloading by following these steps in the xref:./enable_hot_reload.adoc[Enable Hot Reload] section.
+
+
+
+https://onecx.github.io/docs/documentation/current/onecx-docs-start/first-app/enable_hot_reload.html
+[#enable-hot-reload]
+= Enable Hot Reload
+
+For development purposes, you can enable hot reload in your local environment. This allows you to see changes in the application immediately without rebuilding the image. 
+For that we need to adjust the routing configuration in the traefik configurations of the docker image by replacing the labels section of the hello-world-bff service in the `hello-world.docker-compose.yaml` with the following lines.
+
+[source,yaml]
+----
+- "traefik.http.routers.local_mfe.entrypoints=web"
+- "traefik.http.routers.local_mfe.rule=Host(`local-proxy`)&&PathPrefix(`/mfe/helloWorld/`)"
+- "traefik.http.routers.local_mfe.service=local_mfe@file"
+----
+
+The value of `PathPrefix` in the traefik label should match the value of APP_BASE_HREF in the environment section of your docker-compose.yaml.
+Now, routing is handled directly to your locally running application instead of the Docker container.
+
+To make sure, that traefik can access the local application, enhance the `npm start` script in the applications `package.json` with `--host 0.0.0.0 --disable-host-check`.
+
+Additionally the PROXY_CONFIG in the `proxy.config.js` of the UI application needs to be updated like this. Note that the path needs to be adjusted according to the `PathPrefix` value in the traefik label.
+
+[source,javascript]
+----
+const PROXY_CONFIG = {
+  '/mfe/helloWorld': {
+    target: 'http://localhost:4200/',
+    secure: false,
+    pathRewrite: {
+      '^.*/mfe/helloWorld': '',
+    },
+    changeOrigin: true,
+    logLevel: 'debug',
+    bypass: bypassFn,
+  }
+}
+----
+
+If your app runs on the standard port 4200, you can start your application with `npm start`, restart your containers with `docker compose --profile base up -d` and every change in the application should be reflected immediately under `http://local-proxy/onecx-shell/admin/helloWorld/hello`.
+
+[#note-different-ports]
+== Note for different ports
+
+If your application uses a *port other than 4200*, you need to first update the port in the `url` field of the `local_mfe` service in the `./init-data/traefik/traefik-services.yml` file within your `onecx-local-env`. Set the port to match the one your application is running on.
+
+[source,yaml]
+----
+local_mfe:
+    loadBalancer:
+      servers:
+      - url: "http://host.docker.internal:4200/"
+----
+
+Now you can start your application with `npm start` and restart your containers with `docker compose --profile base up -d`. Every change in the application should be reflected immediately under `http://local-proxy/onecx-shell/admin/helloWorld/hello`.
+
+If you want to run multiple applications on different ports, see the xref:./run_multiple_apps.adoc[Running Multiple Local Apps Simultaneously] section.
+
+[#troubleshooting]
+== Troubleshooting
+
+[#local-changes-not-visible]
+=== Local Changes are not Visible
+
+If your local changes are not visible in the OneCX Shell, it could be due to issues with the traefik configurations with the global UI container, that might be still running. To resolve this, stop the container with `docker compose stop hello-world-ui`, so that only your local container is running.
+
+[#angular-ngdevmode-error]
+=== Angular ngDevMode is not defined Error
+
+When running your Angular application, you may see the following error in the browser console:
+
+`hook.js:608 ERROR ReferenceError: ngDevMode is not defined`
+
+This error occurs when the global variable `ngDevMode`, which Angular uses to enable development mode features, is missing from the runtime environment. This is often due to Webpack not injecting the variable during the build process.
+
+*How to fix:*
+
+To resolve this, ensure that `ngDevMode` is defined in your Webpack configuration. You can do this by using the `DefinePlugin` to set the value based on your environment.
+
+First set the environment variable in your Dockerfile:
+
+[source,dockerfile]
+----
+ENV NODE_ENV production
+----
+
+Then add the following code to the webpack.config.js:
+
+[source,javascript]
+----
+const webpack = require('webpack');
+const isProduction = process.env.NODE_ENV === 'production';
+
+module.exports = {
+  ...
+  plugins: [
+    new webpack.DefinePlugin({
+      ngDevMode: JSON.stringify(!isProduction)
+    }),
+    ...
+  ],
+  ...
+};
+----
+
+And in your package.json scripts, ensure ngDevMode is set as production in build time:
+
+[source,json]
+----
+"scripts": {
+  "start": "nx serve --host 0.0.0.0 --disable-host-check",
+  "build": "NODE_ENV=production nx build"
+}
+----
+
+This setup ensures that `ngDevMode` is correctly defined for both development and production builds, preventing the error.
+
+
+
+
+https://onecx.github.io/docs/documentation/current/onecx-docs-start/first-app/run_multiple_apps.html
+[#running-multiple-local-apps]
+= Running Multiple Local Apps Simultaneously
+
+You can include multiple custom apps in your docker-compose.yaml and run them simultaneously. For each app, follow the steps outlined in the xref:./enable_hot_reload.adoc[hot reloading] guide.
+
+Note that each app needs to run on a unique port. Make sure the target port specified in the app's `PROXY_CONFIG` is different for every app.
+
+For each port that is used by an application, you need to add a corresponding entry in the `./init-data/traefik/traefik-services.yml` file within your `onecx-local-env`. This ensures that Traefik can route requests to the correct application based on the port.
+For that, you can add a new `local_mfe2` entry to the `services` and adjust the port to match the port of your application.
+For example, if you have two applications running on ports 4200 and 4300, the configuration would look like this:
+
+[source,yaml]
+----
+local_mfe:
+  loadBalancer:
+    servers:
+    - url: "http://host.docker.internal:4200/"
+local_mfe2:
+  loadBalancer:
+    servers:
+    - url: "http://host.docker.internal:4300/"
+----
+
+Also the traefik rules in the docker-compose need to be adjusted to the right local_mfe, so for the second app, you would need to change `local_mfe` to `local_mfe2` in the labels section of the traefik configuration in the `hello-world-bff` service:
+
+[source,yaml]
+----
+- "traefik.http.routers.local_mfe2.entrypoints=web"
+- "traefik.http.routers.local_mfe2.rule=Host(`local-proxy`)&&PathPrefix(`/mfe/anotherApp/`)"
+- "traefik.http.routers.local_mfe2.service=local_mfe2@file"
+----
+
+Now you can start both applications with `npm start` in their respective directories and restart your containers with `docker compose --profile base up -d`. Every change in either application should be reflected immediately under their respective paths, e.g. `http://local-proxy/onecx-shell/admin/helloWorld/hello` and `http://local-proxy/onecx-shell/admin/anotherApp/feature`.
+
+
+
+https://onecx.github.io/docs/documentation/current/onecx-docs-start/first-app/testing_existing_core_apps.html
+[#testing-changes-to-existing-onecx-core-apps]
+= Testing Changes to Existing OneCX Core Apps
+
+If you've modified an existing OneCX core app (e.g. OneCX Theme UI), you can test it using the same methods available for custom applications.
+
+You can use the same options as described in xref:./running_custom_apps_overview.adoc#running-and-testing-applications[Running and Testing Applications]:
+
+* You can follow the xref:./image_build_automatic.adoc[automatic image build process] and use the build context in `docker-compose.yaml` to build the image from your local application each time you run Docker Compose.
+
+* You can follow the xref:./image_build_manual.adoc[manual image build process] to build a local image in the application and adjust the .env UI variable to use your local image.
+
+* You can set up your application for hot reloading as described in xref:./enable_hot_reload.adoc[Hot Reload] for faster development and testing.
+
+
+
+
+
+https://onecx.github.io/docs/documentation/current/onecx-docs-start/first-app/app_removal.html
+[#removal-of-custom-app]
+= Clean Removal of a Custom App
+
+To remove a previously loaded custom app:
+
+* Remove the app's service definition from `docker-compose.yaml`.
+* Delete any related import files (microfrontends, microservices, products, permissions) from the `imports` folders.
+* Remove menu entries and product references from the `onecx_admin.json`.
+* Re-import the data and restart the environment to ensure the app is fully removed by running:
+[source,sh]
+----
+./import-onecx.sh
+----
+
+
+
+
+https://onecx.github.io/docs/documentation/current/onecx-local-env/index.html
+ifdef::env-site[]
+include::partial$_attributes.adoc[]
+endif::[]
+:page-hide-prev:
+:imagesdir: ../images
+
+= OneCX Local Environment
+
+*onecx-local-env* is the local development environment for OneCX. It is based on Docker/Docker Compose, and enables developers to quickly run a local instance for development and testing purposes.
+
+*onecx-local-env* can either be used as a standalone tool, or integrated into custom development environments via Git submodules. Custom development environments can interact with *onecx-local-env* via provided lifecycle-scripts and extend its functionality by wrapping the provided Docker Compose and script files with custom implementations.
+
+
+== Get and Run OneCX
+[horizontal,labelwidth=25]
+xref:./setup.adoc[Setting up]::     Details on how to get and install OneCX locally
+xref:./run-onecx.adoc[Run OneCX]::  How to start and access OneCX
+
+
+include::./scripts.adoc[leveloffset=+1]
+
+
+== Additional Utilities
+
+In addition to the OneCX Core products, further services will be launched.
+
+.Available Utilities 
+[.stripes-even,cols="25,~"]
+|===
+| xref:./utilities.adoc#keycloak[Keycloak]
+| The IAM service used by OneCX
+
+| Postgres
+| Storing the data. Each OneCX backend service has its own separate database. Access can be gained using pgAdmin.
+
+| xref:./utilities.adoc#pgadmin[pgAdmin]
+| Manage the Postgres databases.
+
+| xref:./utilities.adoc#traefik[Traefik]
+| Proxy service for routing requests between services within the Docker network and from/to outside.  
+|===
+
+
+== OneCX Applications
+The OneCX Platform is a modular system which provides a lot of standard services:
+
+.Core Applications
+[%collapsible]
+====
+include::documentation:onecx-docs-apps:page$_core-app-table.adoc[]
+====
+
+.Feature Applications
+[%collapsible]
+====
+include::documentation:onecx-docs-apps:page$_feature-app-table.adoc[]
+====
+
+
+
+https://onecx.github.io/docs/documentation/current/onecx-local-env/setup.html
+ifdef::env-site[]
+include::partial$_attributes.adoc[]
+endif::[]
+:imagesdir: ../images
+
+// External references
+:docker_install_url:         link:https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository[instructions to install Docker]
+:docker_compose_install_url: link:https://docs.docker.com/compose/install/[Instructions to install Docker Compose]
+:git_install_url:            link:https://git-scm.com/book/en/v2/Getting-Started-Installing-Git[Instructions to install git]
+:nodejs_install_url:         link:https://nodejs.org/en/download/[Instructions to install node.js]
+:jq_install_url:             link:https://stedolan.github.io/jq/download/[Instructions to install jq]
+:wsl_install_url:            link:https://learn.microsoft.com/en-us/windows/wsl/install[Instructions to install WSL]
+
+
+= Set up a OneCX Local Environment
+
+This guide provides instructions for setting up and installing *onecx-local-env*, the local development environment for OneCX. Once setup is done the environment can be started, see {ole_run_onecx}.
+
+If you want to setup a development environment for writing OneCX documentation, please refer to the {onecx_docs_setup_ref} guide instead.
+
+== Prerequisites
+=== Operating Systems
+*onecx-local-env* fully supports Linux, macOS and Windows 10/11 via WSL2.
+
+Linux & macOS::
+Linux and macOS are natively supported operating systems for *onecx-local-env* and do not require any operating-system-specific adjustments. Users of these operating systems can safely proceed to the next section of this guide.
+
+Windows::
+To run *onecx-local-env* on Windows, Windows Subsystem for Linux version 2 (WSL2) must be installed and configured on the system. To check if WSL2 is currently installed, open PowerShell or a command prompt and run the following command:
++
+[source,powershell]
+----
+wsl -l -v
+----
+This command lists all installed WSL distributions along with their version numbers. To run *onecx-local-env*, at least one distribution must be installed and its version *must be 2*.
++
+In case of errors, no output, or no WSL2 distributions listed, WSL2 is either not installed or not properly configured. Official guidance on installing and configuring WSL2 can be found here: {wsl_install_url}
+
+
+[NOTE]
+.Checkpoint
+====
+At this point, users should have verified that their operating system is supported and, if using Windows, that WSL2 is properly installed and configured.
+====
+
+[IMPORTANT]
+====
+If you are using Windows and WSL, you should install and use your *entire development environment* in WSL. This includes cloning Git repositories and installing tools like Docker, Git, and jq. +
+Connect your development environment, such as Visual Studio Code, to WSL and install its extensions/plugins in WSL as well.
+
+[text-important]#Avoid working on your WSL files from Windows, i.e. via mount paths like `/mnt/c/...`.# +
+This can lead to file permission issues and unexpected behavior when running scripts and Docker containers.
+====
+
+
+=== Programs
+*onecx-local-env* requires the direct installation of some programs on the operating system.
+
+Docker & Docker Compose::
+To ensure that all used features work correctly, it is recommended to use *Docker Compose* version *v2.20.0* or higher. When using older versions, some functions may not work as expected.
++
+The functionality of *onecx-local-env* has been tested with the following versions:
++
+[horizontal]
+Docker:::         *28.1.1*  => {docker_install_url}
+Docker Compose::: *2.35.1*  => {docker_compose_install_url}
+
+[horizontal]
+git::
+Various actions such as cloning the *onecx-local-env* repository and following the installation instructions => {git_install_url}
+node.js::
+Working on local microfrontends and import OneCX data => {nodejs_install_url}
+jq::
+Import OneCX data => {jq_install_url}
+
+
+== OneCX Installation
+=== Cloning the repository
+Before starting the installation, the *onecx-local-env* repository needs to be cloned into a folder on the local machine/inside WSL2. This can be done using the following command:
+[source,bash]
+----
+git clone https://github.com/onecx/onecx-local-env.git
+----
+
+[NOTE]
+.Checkpoint
+====
+At this point, the *onecx-local-env* repository should be cloned and all necessary scripts should have execute permissions.
+To verify:
+
+* Confirm all *.sh* scripts have execute permissions (indicated by an *x* in the permission string).
+* If any scripts are missing execute permissions, run `chmod +x <file name>`.
+====
+
+
+=== Changing the hosts file
+In order to expose multiple services on the same local port, OneCX Local Environment uses the Traefik reverse proxy. Traefik routes requests to the appropriate services based on the requested hostname.
+
+To ensure that all relevant hostnames used by OneCX are correctly routed to the local machine, the system *hosts* file needs to be modified to include entries for all OneCX services.
+
+[#hosts]
+Hosts file locations::
++
+[horizontal]
+Windows::: `c:\Windows\System32\drivers\etc\hosts`
+Linux:::   `/etc/hosts`
+macOS:::   `/etc/hosts`
+
+.Click here to view entries to be added to the *hosts* file
+[%collapsible]
+====
+include::./_hosts-entries.adoc[]
+====
+
+== Next Step
+After completing the steps outlined in this guide, *onecx-local-env* is now ready to run OneCX locally. Check the instructions on how to start, access, and stop the local environment in the {ole_run_onecx} guide.
+
+
+
+
+https://onecx.github.io/docs/documentation/current/onecx-local-env/run-onecx.html
+ifdef::env-site[]
+include::partial$_attributes.adoc[]
+endif::[]
+:imagesdir: ../images
+
+= Running OneCX locally
+
+This guide provides a quick overview of the steps required to run a local OneCX environment. It includes instructions on starting the environment, accessing OneCX in a browser, and stopping the environment when finished.
+
+The following steps assume that *onecx-local-env* has already been configured and installed according to the installation instructions. If you have not done so yet, please refer to xref:./setup.adoc[Setting up] before proceeding.
+
+
+== Starting OneCX
+After setting up a local OneCX environment can be started by running a single command from the root directory of *onecx-local-env*.
+
+[source,bash]
+----
+./start-onecx.sh
+----
+
+This command starts the minimal set of required Docker services and imports the necessary data for them to function. This process may take several minutes, especially on the first run, as Docker images may need to be pulled.
+
+.Successful starting
+image::scripts/script_start-onecx.sh.png[]
+
+
+[TIP]
+====
+The *start-onecx.sh* script accepts optional options to customize its behavior. A list of available options can be found in the xref:./scripts/start.adoc#available-options[start-onecx.sh] documentation or by running
+
+`./start-onecx.sh -h`
+====
+
+
+[#accessing-onecx]
+== Accessing OneCX
+
+After starting the local environment, OneCX can be accessed in a web browser by navigating to http://onecx.localhost/onecx-shell/admin[http://onecx.localhost/onecx-shell/admin].
+
+The default login credentials for the admin user are:
+
+* Username: `onecx`
+* Password: `onecx`
+
+.OneCX UI after login
+image::screenshot_successful-start-onecx.png[]
+
+
+[NOTE]
+====
+If the environment was started with only essential services, not all UI functions are available. This is not a bug, but by design. To start all services, start with
+
+`./start-onecx.sh -p all`
+====
+
+
+== Stopping OneCX
+
+When finished using the local OneCX environment, it can be stopped by running the following command from the root directory of *onecx-local-env*:
+[source,bash]
+----
+./stop-onecx.sh
+----
+
+[TIP]
+====
+The `stop-onecx.sh` script accepts optional options to customize its behavior. A list of available options can be found in the xref:./scripts/stop.adoc[stop-onecx.sh] documentation or by running
+
+`./stop-onecx.sh -h`
+====
+
+
+== Start OneCX Services
+
+The script `xref:./scripts/start.adoc[start-onecx.sh]` allows you to start OneCX services using predefined profiles. Alternatively, you can of course start the services directly with Docker Compose. Due to the service dependencies defined in the Docker Compose file, it is sufficient to start only the top-level services; this will automatically start the dependent services as well.
+
+.Example: Start all OneCX Theme Services
+[source, bash]
+----
+docker compose up -d onecx-theme-ui
+----
+
+== Stop OneCX Services
+
+Since the service dependencies defined in the Docker Compose file only work in one direction, you may also need to take care of the dependent services when stopping services.
+
+.Example: Stop OneCX Theme UI Service only
+[source, bash]
+----
+docker compose down onecx-theme-ui
+----
+
+.Example: Stop all OneCX Theme Services
+[source, bash]
+----
+docker compose down onecx-theme-svc onecx-theme-bff onecx-theme-ui
+----
+
+
+
+
+https://onecx.github.io/docs/documentation/current/onecx-local-env/extend/extend.html
+= Extending the OneCX default Environment
+
+OneCX functions as a collection of microservices and microfrontends. The {onecx_shell_link} orchestrates the microfrontends for a unified user interface. This concept allows for the easy integration of other services that are launched outside the {ole_network_link}.
+
+There are several ways to expand the OneCX local environment
+
+
+== Integrate a local running Microfrontend
+
+If a microfrontend has been started separately, integration can be easily accomplished through routing and path rewriting by {ole_traefik_link}.
+
+Follow the instructions xref:./local-mfe.adoc[Integrate a local Microfrontend] to use your microfrontend directly in OneCX.
+
+[TIP]
+This is the recommended procedure for integrating a *locally running microfrontend*.
+
+
+== Integrate Microservice Images
+
+To integrate Docker images into OneCX, you need a separate docker.compose file to manage the integration.
+
+Follow the instructions in xref:./local-images.adoc[Integrate Microservice Images] to integrate your images into OneCX.
+
+[TIP]
+This is the recommended approach for *integrating additional microservices*. +
+For integrating locally running microfrontends, use the method described above.
+
+
+
+
+
+https://onecx.github.io/docs/documentation/current/onecx-local-env/extend/local-mfe.html
+
+= Integrate a local Microfrontend
+
+This approach enables *hot-reloading* of your locally running micro-frontend: changes you make there are automatically visible in OneCX after the rebuild. The best way for fast frontend development.
+
+== Start the local Microfrontend
+
+Use one of the following command to start the Microfrontend. It depends on type of the Angular application.
+In the following examples, 6021 is used as the port where the microfrontend is running locally. Adjust the port as needed.
+
+.Start Angular "ng" Microfrontend on port 6021
+[source,bash]
+----
+npm run start -- --port 6021 --host 0.0.0.0 --disable-host-check --public-host=http://localhost:6021
+----
+
+.Start Angular "nx" Microfrontend on port 6021
+[source,bash]
+----
+npm run start -- --port=6021 --host 0.0.0.0 --disableHostCheck --publicHost=http://localhost:6021
+----
+
+CheckPoint::
+Please check the microfrontend is up and running by accessing the *public host URL* (see start command) in Browser. The *remoteEntry.js* should be loaded.
+
+.Local running Microfrontend
+image::screenshot_successful-start-local-mfe.png[]
+
+
+== Integrate the local Microfrontend into OneCX
+
+The integration can be easily accomplished through routing and path rewriting by xref:../utilities.adoc#traefik[Traefik]. This is necessary because the Docker Compose project's network for OneCX is isolated from the outside world. And the meaning of "localhost" within the OneCX network (Docker uses "host.docker.internal" internally) differs from "localhost" outside of it. Therefore, requests from the Docker environment must be routed to the outside world and mapped to the localhost address.
+
+This step is done with the script *toggle-mfes.sh*. It creates a configuration file with routing and path rewrite instructions that are read by Traefik. See also the documentation for xref:../scripts/toggle-mfes.adoc[toggle-mfes.sh].
+
+.Command for integrating the local app running on http://localhost:6021
+[source,bash]
+----
+./toggle-mfes.sh -a my-app:6021
+----
+
+.Successful Integration
+image::extend/activate_my-app_6021.png[]
+
+.Check if the locally running app can be accessed via the integration path.
+[source,text]
+----
+http://onecx.localhost/mfe/my-app/remoteEntry.js
+----
+
+.Traefik Configuration located in `init_data/traefik/active`
+[%collapsible%closed]
+====
+include::./_my-app_6021.adoc[]
+====
+
+[NOTE]
+====
+If the microfrontend requires its own backend functionality, then these backend services must also be started and presumably integrated into OneCX. The *./toggle-mfes.sh* script does not check this. See {integrate_images_link} for details on how to integrate additional backend services.
+
+The method described here is for all microfrontends except the OneCX Shell. The OneCX Shell has a special role in OneCX and must be started with a specific command. See {toggle_shell_link} for details.
+====
+
+
+
+
+
+https://onecx.github.io/docs/documentation/current/onecx-local-env/extend/add_application_manually/add_application_manually.html
+Add Webpack App UI Manually to OneCX
+When you have created a custom application and want to run it in the OneCX local environment, you need to add the application to the OneCX. This involves adding the application to the product store, adding the application to the workspace, and assigning permissions and roles for accessing the application.
+
+This guide is created for webpack module apps. To see all supported types of microservices, see the Microservices and Microfrontends documentation.
+
+Alternatively you can use local-env-cli to add your application to the OneCX local environment. See local-env-cli for more details.
+
+Prerequisites
+Before you can add your custom application to the OneCX, you need to have the following prerequisites in place:
+
+Your app needs to have webpack module federation implemented. See the Module Federation with Webpack documentation for details on how to implement webpack module federation in your application.
+
+You have to add custom micro frontends to the OneCX local environment with ./toggle-mfe script.
+
+Guide Steps
+Add the application and UI component to the product store
+
+Add the application to the workspace
+
+Assign permissions and roles (Optional)
+
+Like all manual changes in the local environment, manually created applications will be lost when the Postgres volume is deleted (e.g. by running ./stop-onecx.sh -c).
+
+
+
+https://onecx.github.io/docs/documentation/current/onecx-local-env/extend/local-images.html
+
+= Integrate Docker Images
+
+If you need to extend this environment with your own containers or import additional data, please taken the following guidelines into account.
+
+The following sections describe the necessary steps to integrate your own Docker images into the OneCX Local Environment. We will use a simple *Hello World* application as an example, consisting of a backend service, a backend-for-frontend (BFF) and a UI component.
+
+Steps to integrate your own Docker images::
+* Prepare hosts file entries to access your services via the local proxy.
+* Create the required database and user in the Postgres container.
+* Prepare your Docker images for the services you want to add.
+* Prepare a Docker Compose file to define your services.
+* Starting your services
+
+
+== Add entries in hosts file
+To access your *Hello World* service via the local proxy, add the following entries to your system's hosts file:
+[source, text]
+----
+127.0.0.1   onecx-hello-world-svc
+127.0.0.1   onecx-hello-world-bff
+----
+
+== Create Database and User
+Before starting your service, create the necessary database and user in the PostgreSQL container (if they haven't already been created). +
+You can do this either by connecting to the PostgreSQL container and executing the required SQL commands, or by using an SQL script, which is preferable for reproducibility.
+
+. Prepare SQL script
++
+[source, sql]
+----
+CREATE USER onecx_hello_world WITH ENCRYPTED PASSWORD 'onecx_hello_world';
+CREATE DATABASE onecx_hello_world with owner onecx_hello_world;
+GRANT ALL PRIVILEGES ON DATABASE onecx_hello_world TO onecx_hello_world;
+GRANT ALL PRIVILEGES ON SCHEMA public TO onecx_hello_world;
+----
++
+As example the script is saved as `hello-world.sql` in the root of the OneCX Local Environment directory.
+
+. Execute the SQL script
++
+[source, bash]
+----
+docker exec -i postgresdb psql -U postgres -d postgres < ./hello-world.sql
+----
+
+. Verify the database and user creation
++
+[source, bash]
+----
+docker exec -it postgresdb psql -U postgres -c "\l"
+docker exec -it postgresdb psql -U postgres -c "\du"
+----
++
+.Database Verification
+image::extend/db-creation_hello-world.png[]
++
+.User/Role Verification
+image::extend/role-creation_hello-world.png[]
+
+
+== Prepare Docker Images
+* Build and tag your Docker images according to your versioning strategy. You can either use a local registry or build them locally for direct use. +
+* Push your images to your Docker registry if necessary.
+
+
+== Prepare Docker Compose File
+
+* Create the file (e.g. `hello-world.compose.yaml`), define your services with image references and tags, environment variables and health checks. +
+* Ensure that your file uses the same Compose project name as defined in the OneCX environment file to maintain network and volume consistency.
++
+.Compose Project Name
+[source,yaml]
+----
+name: onecx-local-env
+----
+
+* Add the OneCX Compose file that you want to use as the basis for inheriting existing service definitions and configurations. The easiest way is to use the file in the root directory of your local OneCX environment (compose.yaml). +
+Alternatively, you can reference the version-specific Docker Compose file (e.g. `versions/v2/compose.yaml`).
++
+.Include OneCX Local Environment root compose file
+[source,yaml]
+----
+include:
+  - compose.yaml
+----
+
+* Place the file in the root of the OneCX Local Environment directory.
+
+.Here is an example of a Docker Compose file for the *Hello World* services
+[%collapsible]
+====
+include::./_onecx-hello-world.adoc[]
+====
+
+
+== Prepare Environment Settings
+To keep the example simple, all necessary environment variables are either taken from the base Compose project (OneCX Local Environment) or defined directly in the Compose file (e.g. database username/password for backend services).
+
+If you need to define additional environment variables (e.g. for image tags or database connection details), you can do so in a separate environment file. +
+If so then this file must be specified when starting the OneCX Local Environment using the `--env-file` option with Docker Compose.
+
+
+== Start Services
+
+The relationship of the *Hello World* services to each other is defined wih the "depends on" settings in the Docker Compose file. Therefore, it is sufficient to start only the UI service, which will automatically start the backend services as well.
+
+.Start *Hello World* Services
+[source, bash]
+----
+docker compose --env-file ./versions/v2/.env -f hello-world.compose.yaml up -d onecx-hello-world-ui
+----
+
+Or if you have defined additional environment variables in a separate file (e.g. `hello-world.env`), you can start the services as follows:
+
+.Start *Hello World* Services with extra env file
+[source, bash]
+----
+docker compose --env-file ./versions/v2/.env --env-file ./hello-world.env -f hello-world.compose.yaml up -d onecx-hello-world-ui
+----
+
+.Verify that the services are running
+[source, bash]
+----
+./list-containers.sh
+----
+
+
+
+
+
+https://onecx.github.io/docs/documentation/current/onecx-local-env/extend/custom-imports.html
+
+= Import Custom Data
+
+When integrating your own (customer-specific) microservices into the local OneCX environment, you need to import the corresponding data so that the microservices can be used in the environment.
+This concerns at least the following data:
+
+* Product and application data to make the microservices available in the environment
+* Menu entries to make the microservices accessible in the OneCX UI
+* Permissions and role assignments to control access to the microservices (UI and BFF)
+
+Additionally, you may need to provide Docker Compose files to run the microservices in the local environment.
+
+
+== Tools for Importing Custom Data
+The {cli_link} provides commands to import product and application data, menu entries, and permissions/role assignments. These commands can be used to import the necessary data for your custom microservices into the local OneCX environment. See the documentation for *onecx-local-env-cli* for details on how to use these commands.
+
+
+
+== Prepare Custom Data manually
+To prepare custom data for import, you need to create a JSON file that contains the data you want to import. The structure of the JSON file should match the structure of the data in the OneCX services. You can use the exported data from the services as a reference for the structure. +
+Once you have created the JSON file with your custom data, you can place it in a directory of your choice. For example, you can create a directory called *custom-data* in the root of the *onecx-local-env* repository and place your JSON file there.
+
+The *import-onecx.sh* script can also be used to import custom data into the OneCX services. This allows you to extend the initial data with your own data, e.g. for testing or development purposes.
+
+to be continued...
+
+
+
+
+
+
+https://onecx.github.io/docs/documentation/current/onecx-local-env/extend/advanced.html
+
+= Tipps for Advanced Usage
+
+This section provides some additional tips and tricks for advanced usage of the OneCX Local Environment.
+
+== Rerun Database Initialization Script
+
+If you need to run the database initialization scripts again (e.g. after adding a new database), you can do so with the following commands, executed from the root of the OneCX Local Environment directory:
+
+[source, bash]
+----
+docker cp ./init-data/postgres/create-databases.sql postgresdb:/docker-entrypoint-initdb.d/
+docker exec -u postgres postgresdb psql postgres postgres -f /docker-entrypoint-initdb.d/create-databases.sql >init-db.log 2>&1
+----
+This will copy the current version of the `init-data/postgres/create-databases.sql` script to the PostgreSQL container and execute it, creating any missing databases as defined in the script.
+
+The 2nd command creates a log file `init-db.log` in the current directory, which contains the output of the script execution. +
+You can check this log file for any errors or messages related to the database initialization.
+
+
+
+
+Scripts
+
+https://onecx.github.io/docs/documentation/current/onecx-local-env/scripts/check-images.html
+= Check local Docker images
+
+The *check-images.sh* script is used to list local Docker images with version information. It can be run from the root directory of the *onecx-local-env* repository.
+
+.Command to list all Docker images (without any filter).
+[source,bash]
+----
+./check-images.sh
+----
+
+.List of local Docker images
+image::scripts/script_check-images.sh.png[]
+
+[TIP]
+====
+The local Docker images can easily be updated using the script xref:./update-images.adoc[update-images.sh].
+====
+
+== Available Options
+The script accepts several optional options to customize its behavior. Some options can be combined. The options are:
+
+-f::
+Image filter, see https://docs.docker.com/reference/cli/docker/image/ls/#filter
+
+-h::
+Displays help information about the script and its available options. If used then all other options are ignored.
+
+-n <text>::
+Name filter, find images which have <text> into image name
+
+== Examples
+
+=== List images with onecx in name
+
+[source,bash]
+----
+./check-images.sh   -n onecx
+----
+
+.List of local OneCX Docker images
+image::scripts/script_check-images.sh_filter-onecx.png[]
+
+=== List images marked as dangling
+
+List images marked as dangling, which means they are not tagged and not referenced by any container. This happens if there is a newer version of an image built or pulled. Such images can be removed without affecting any running container.
+
+.List candidates for deletion
+[source,bash]
+----
+./check-images.sh   -f "dangling=true"
+----
+
+The -f option can be combined with the -n option to filter for dangling images with a specific name pattern.
+
+.List outdated backend service images
+[source,bash]
+----
+./check-images.sh   -f "dangling=true" -n svc
+----
+
+== Understanding the Listing
+
+=== OneCX Version Labelling
+When building OneCX images, the version is set in the label *samo.project.version*. The value of this label is displayed in the listing as *VERSION*.
+
+=== Outdated Images
+Over time, local Docker images become outdated. Especially after updates, images with the tag `*<none>*` may be listed.
+
+.List of outdated Docker images
+image::scripts/script_check-images.sh_none-images.png[]
+
+Such images can be removed. The script xref:./update-images.adoc[update-images.sh] can be used or native with
+
+[source,bash]
+----
+docker image rm <image-id>
+----
+
+
+https://onecx.github.io/docs/documentation/current/onecx-local-env/scripts/import.html
+= Import OneCX Data
+
+To operate a local OneCX, some services require initial data, e.g. the theme, the admin workspace, permissions, etc.
+
+The *import-onecx.sh* script is used to import data needed by the OneCX services. It can be run from the root directory of the *onecx-local-env* repository.
+
+.Command for importing the data for the essential services:
+[source,bash]
+----
+./import-onecx.sh
+----
+
+.Successful import
+image::scripts/script_import-onecx.sh.png[]
+
+[NOTE]
+====
+The imports are executed *without overwriting data* that already exists in the services. +
+This allows to re-run the import script multiple times without losing any data that has been created or modified after the initial import.
+====
+
+== Available Options
+The script accepts several optional options to customize its behavior. Some options can be combined. The options are:
+
+-d::
+Specify a set of data to be imported (all, base) or a specific data type like workspace, theme etc.
+  * base (Default).
+  * all
+  * one of [ ai, bookmark, assignment, parameter, permission, mfe, ms, product, slot, tenant theme, welcome, workspace]
+
+-e::
+The edition of OneCX. This must match the edition that was used to start the environment. Supported editions are:
+  * v2 (Default).
+  * v1
+
+-h::
+Displays help information about the script and its available options. If used then all other options are ignored.
+
+-s::
+Secure authentication enabled, default not enabled (value is inherited from xref:./start.adoc[start-onecx.sh]). Automatically set on tenant-specific imports.
++
+[NOTE]
+====
+Once Docker services have been started with the security option enabled, all subsequent actions require an authenticated user. For example, an import operation must then be started with the *-s* option to succeed.
+====
+
+-t::
+Define the tenant for tenant-specific imports (e.g., workspace and theme data). When using a tenant other than the default tenant, *the security option is enabled*, and a suitable user is used for the import. The user is authorized, the tokens are retrieved, and the import is then executed using the tokens in the request header. This is why the security option is enabled for this process. +
+Tenants (corresponding to the tenant data imports):
+  * default (default)
+  * t1
+  * t2
+
+-v::
+Verbose: display details during import of objects
+
+-x::
+Skip checking running Docker services
++
+[CAUTION]
+When used, Docker does not check whether services require authentication. Please use the same security settings as when starting with xref:./start.adoc[start-onecx.sh].
+
+
+== Examples
+
+[#import-all-data]
+=== Import ALL data
+Import all available OneCX data as:
+
+* Non-tenant specific data
+* Tenant data for *default* tenant
+
+Before the import, a check is performed to ensure that all required services are already running. Any missing services are started.
+
+[source,bash]
+----
+./import-onecx.sh -d all
+----
+
+[#import-specific-data]
+=== Import specific data, skip check
+Only workspace data is imported. If the data are tenant-specific data then the default tenant is used (use flag *-t* for a different tenant).
+
+With *-x* running services are not checked beforehand. If a required service is not running, corresponding imports will fail.
+
+[source,bash]
+----
+./import-onecx.sh -d workspace -x
+----
+
+
+[#import-tenant-data]
+=== Import Tenant data
+Import OneCX data for a specific tenant, e.g. *t1*. In general, not all data types are tenant-specific. The tenant-specific data types include, for example, workspace and theme data. When importing tenant-specific data, the security option is enabled, and the import is performed using an authorized user.
+
+[source,bash]
+----
+./import-onecx.sh -t t1 -x
+----
+
+.Successful import of *t1* data with authenticated user *onecx_t1_admin*
+image::scripts/script_import-onecx.sh_tenant.png[]
+
+
+[TIP]
+====
+If you want only import tenant-specific data but do not working afterwards with secure authentication then execute the xref:./start.adoc[start-onecx.sh] script *without* *-s* option again. This reset the security option on running services.
+====
+
+
+// https://onecx.github.io/docs/documentation/current/onecx-local-env/scripts/list-containers.html
+= List Docker Containers
+
+The *list-containers.sh* script provides an overview of running Docker containers used in the OneCX Local Environment. +
+It displays the container ID, service name, image name, and current status of each container.
+The script can be executed from the root directory of the *onecx-local-env* repository.
+
+.Command to display the available options
+[source,bash]
+----
+./list-containers.sh -h
+----
+
+
+== Available Options
+The script accepts several optional options to customize its behavior. +
+The available options are:
+
+-a::
+List all containers, including those that are not part of the OneCX Local Environment. +
+Other options are ignored.
+
+-h::
+Displays help information about the script and its available options.
+
+-n <text>::
+Name filter, show only containers which have <text> into container name. +
+If used in combination with *-u* then only unhealthy containers matching the name filter are shown.
+
+-u::
+Show only unhealthy containers. +
+Can be used in combination with *-n* option.
+
+
+== Examples
+
+[#list-containers-name-filter]
+=== List containers with name filter
+The Docker which have *theme* in container name are shown.
+
+[source,bash]
+----
+./list-containers.sh  -n theme
+----
+
+.Theme Containers
+image::scripts/script_list-containers.sh_name-filter.png[]
+
+[#list-unhealthy-containers]
+=== List unhealthy containers with name filter
+The Docker which have *theme* in container name and *unhealthy* status are shown.
+
+[source,bash]
+----
+./list-containers.sh  -n theme -u
+----
+
+.No unhealthy Containers
+image::scripts/script_list-containers.sh_unhealthy-nothing.png[]
+
+
+https://onecx.github.io/docs/documentation/current/onecx-local-env/scripts/setup-truststore.html
+= Setup Java Truststore with Custom Certificates
+
+The *setup-truststore.sh* script is used to create or update a Java Truststore containing custom certificates needed by Java applications running inside Docker containers in the OneCX Local Environment.
+
+The script can be run from the root directory of the *onecx-local-env* repository:
+
+[source,bash]
+----
+./setup-truststore.sh
+----
+
+Instructions for preparing the Java Truststore with your certificates can be found under xref:../internal/custom-certificates.adoc[Custom Certificates].
+
+== Available Options
+The script accepts several optional options to customize its behavior. Some options can be combined. The options are:
+
+-d <directory>::
+Certificate directory, default: './certs'
+
+-h::
+Displays help information about the script and its available options. If used then all other options are ignored.
+
+-p <password>::
+Truststore password, length > 5, default: 'trustjava'
+
+
+== Examples
+
+[#create-truststore-default]
+=== Create truststore with default settings
+A Java Truststore is created at the default location with the default password. The script looks for certificates in the default directory `./certs` and imports all found certificates into the truststore.
+
+[source,bash]
+----
+./setup-truststore.sh
+----
+
+.Creating truststore with default settings
+image::scripts/script_setup-truststore.sh_default.png[]
+
+
+https://onecx.github.io/docs/documentation/current/onecx-local-env/scripts/start.html
+= Start local OneCX
+
+The *start-onecx.sh* script is used to start the OneCX Local Environment. By default, it will start a minimal set of services and import initial mock data on startup. Data imports will not overwrite any custom data that may already exist in the environment and can be skipped using the appropriate option. The script can be run from the root directory of the *onecx-local-env* repository:
+
+[source,bash]
+----
+./start-onecx.sh
+----
+
+.Successful starting
+image::scripts/script_start-onecx.sh.png[]
+
+[NOTE]
+====
+The script can be executed at any time. Docker checks the configuration of the services and restarts them if there are changes. Without changes, running services are not affected, and only missing services are started. Existing data that was imported or added by the user remains unchanged. 
+====
+
+[#available-options]
+== Available Options
+The script accepts several optional options to customize its behavior. Some options can be combined. The options are:
+
+-e::
+The edition of OneCX to start. Supported editions are:
+  * `v2`: Starts the current version of OneCX Local Environment (Default).
+  * `v1`: Starts the legacy version of OneCX Local Environment (Not recommended for new setups).
+
+-h:: Displays help information about the script and its available options.
+
+-p <profile-name>::
+The profile to use when starting the environment. The supported profiles are:
+  * `base`: Starts a minimal version of OneCX Local Environment with only essential services. (Default)
+  * `all`: Starts all available services defined in the Docker Compose file.
+
+-s::
+Enables secure mode, which enforces authentication/authorization and taken into account the tenant ID of the user. (Default: disabled)
++
+[NOTE]
+====
+When used, the services are started in such a way that they always require authentication AND taken into account the tenant ID, i.e. during import and login on UI!
+
+Consequently, the login takes place in the correct tenant.
+====
+
+-x::
+Skips the import of initial data after starting the services. (Default: import data according to the used profile)
+
+== Examples
+
+[#start-essential-services]
+=== Start essential Services
+The Docker services *essential* for OneCX are started. The necessary Docker volumes are created and required data are imported. Technically, these services are labelled with the *base* profile in the Docker Compose file used.
+
+There is no security context defined, so authentication/authorization on services is disabled.
+
+* All data are owned by *default* tenant.
+* All logins are using the *default* tenant!
+
+[source,bash]
+----
+./start-onecx.sh
+----
+
+
+[#start-all-services]
+=== Start ALL Services
+*All* Docker services for OneCX are started. The necessary Docker volumes are created and required data are imported. Technically, the relevant services are marked with the *all* profile in the Docker Compose file used.
+
+[source,bash]
+----
+./start-onecx.sh -p all 
+----
+
+
+[#start-with-security]
+=== Start with Security, skipping Import
+The Docker services *essential* for OneCX are started with enabled secure authentication and also the tenant id is taken into account. This is the main precondition for tenant-compliant logins.
+
+The necessary Docker volumes are created but no data are imported.
+
+[source,bash]
+----
+./start-onecx.sh -s -x
+----
+
+[TIP]
+====
+If data needs to be imported in a tenant-specific manner, then use the script xref:./import.adoc[import-onecx.sh] with the appropriate options after starting the services.
+====
+
+
+include::../utilities.adoc[]
+
+
+// https://onecx.github.io/docs/documentation/current/onecx-local-env/scripts/stop.html
+= Stop local OneCX
+
+The *stop-onecx.sh* script is used to stop the OneCX Local Environment. It can be run from the root directory of the *onecx-local-env* repository. Here the command for stopping the essential services without removing data:
+
+[source,bash]
+----
+./stop-onecx.sh
+----
+
+== Available Options
+The script accepts several optional options to customize its behavior. Some options can be combined. The options are:
+
+-c::
+Cleans up all volumes associated with the OneCX Local Environment when stopping the services. This will remove all data stored in the volumes, so use this option with caution. (Default: disabled)
++
+Deletion only occurs if the service shutdown was completely successful, meaning no services are still running. This prevents data loss in case of problems during shutdown. This is the case, for example, if *all* OneCX services have been started, but only the *base* profile is stopped.
+
+-e::
+The edition of OneCX to stop. This must match the edition that was used to start the environment. Supported editions are:
+* `v2` (Default).
+* `v1`
+
+-h:: Displays help information about the script and its available options. If used then all other options are ignored.
+
+-p <profile-name>::
+The profile to use when stopping the environment. This must match the profile that was used to start the environment. The supported profiles are:
+* `base` (Default)
+* `all`
+
+
+== Examples
+
+=== Stop base and Cleanup
+The Docker services *essential* for OneCX will be terminated, including the deletion of all data. Technically, this involves deleting the Docker volumes used by OneCX.
+
+[source,bash]
+----
+./stop-onecx.sh -c
+----
+
+.Successful stopping with cleanup
+image::scripts/script_stop-onecx.sh_cleanup.png[]
+
+
+=== Stop ALL and Cleanup
+*All* Docker services for OneCX will be terminated, including the deletion of all data. Technically, this involves deleting the Docker volumes used by OneCX.
+
+[source,bash]
+----
+./stop-onecx.sh -p all -c
+----
+
+
+// https://onecx.github.io/docs/documentation/current/onecx-local-env/scripts/toggle-mfes.html
+= Integrate Microfrontends into OneCX
+
+The script *toggle-mfes.sh* integrates a locally running microfrontend into the OneCX environment, allowing it to interact with other microfrontends. This process is also reversible. 
+
+How it works::
+The script creates a small configuration file in Traefik, tailored to the local microfrontend. Traefik then forwards requests from the Docker network to the external local microfrontend.
+The script can be run from the root directory of the *onecx-local-env* repository.
++
+The Traefik configuration files are stored in `init-data/traefik/active/`. Traefik immediately detects any changes there, no extra restart is necessary.
+
+.Command to list the currently integrated microfrontends:
+[source,bash]
+----
+./toggle-mfes.sh  -l
+----
+
+.List of integrated Microfrontends
+image::scripts/script_toggle-mfes.sh_list.png[width=550]
+
+.Empty List - No Integrated Microfrontends
+image::scripts/script_toggle-mfes.sh_list-empty.png[]
+
+
+== Precondition
+Before a microfrontend can be successfully integrated into OneCX, it must be started. It is recommended to start the microfrontend in the following way. In the following examples, *6021* is used as the port where the microfrontend is running locally. Adjust the port as needed.
+
+.Start Angular **ng** Microfrontend on port 6021
+[source,bash]
+----
+npm run start -- --port 6021 --host 0.0.0.0 --disable-host-check --public-host=http://localhost:6021
+----
+
+.Start Angular **nx** Microfrontend on port 6021
+[source,bash]
+----
+npm run start -- --port=6021 --host 0.0.0.0 --disableHostCheck --publicHost=http://localhost:6021
+----
+
+[NOTE]
+====
+Please check the microfrontend is up and running by accessing the *public host URL* in Browser.
+[source,text]
+----
+http://localhost:6021/remoteEntry.js
+----
+The *remoteEntry.js* should be loaded - the content is displayed. +
+The *./toggle-mfes.sh* script does not check this!
+====
+
+
+== Available Options
+The script accepts multiple options to customize its behavior; one of each is required. +
+*All options may only be used separately!*
+
+The options are:
+
+-a <app-name>[:<app-port>[:<app-path>]]::
+Integrate one or more local microfrontends (app-name). In addition to the microfrontend name, you can optionally specify a port (app-port) and path (app-path). The default port is *4200*. See example section below. +
+If the microfrontend is one of OneCX Core products and no port is specified then predefined ports are used.
+
+-c:: Cleanup, remove all existing configurations
+
+-d <app-name>[:<app-port>]::
+Deintegrate one or more local Microfrontends. See example section below.
++
+[IMPORTANT]
+====
+. During deintegration, the same port must be specified as was specified during integration.
+. Deintegrate your microfrontend before stopping it, otherwise Traefik will continue to route requests to a non-existing service. There is no failover mechanism. See xref:#routing-and-prioritize[section below] for details.
+====
+
+-h:: Display this help and exit
+
+-l::  List of currently integrated local microfrontends
+
+
+== Examples
+
+=== Integrate my App with specific path
+The local microfrontend *my-app* runs on `http://localhost:4200` (standard Angular). +
+`/my-app-path` is the path under which the microfrontend is accessible within OneCX.
+
+.Integrate *my-app* on standard port *4200* (not extra specified) with specific path */my-app-path*
+[source,bash]
+----
+./toggle-mfes.sh  -a my-app::/my-app-path
+----
+
+.Successful integrated "my-app"
+image::scripts/script_toggle-mfes.sh_activate-my-app.png[]
+
+
+=== Integrate several Apps
+Integrate *workspace* on standard port *5025* AND *user-profile* on port *5027*. +
+Since no path is specified, the default paths are used, e.g. */mfe/workspace*
+
+.Integrate *workspace* and *user-profile* with specific ports
+[source,bash]
+----
+./toggle-mfes.sh  -a workspace user-profile:5027
+----
+
+.Successful integrated Microfrontends
+image::scripts/script_toggle-mfes.sh_activate.png[]
+
+
+=== Integrate OneCX Shell
+The integration of the shell requires a special path mapping. Hereby the path is not completely stripped. Define the strip path to be used at the end. 
+
+.Integrate OneCX Shell with specific path mapping
+[source,bash]
+----
+./toggle-mfes.sh  -a shell::/onecx-shell/:/
+----
+
+.Successful integrated OneCX Shell
+image::scripts/script_toggle-mfes.sh_activate-shell.png[]
+
+[NOTE]
+Because OneCX Shell is a microfrontend with a special role in OneCX it have to be started with a specific command as well.
+
+.Start Shell on default port 4200
+[source,bash]
+----
+npm run start:local-env
+----
+
+.Start Shell on a specific port (for example 5000)
+[source,bash]
+----
+npm run start:local-env -- --port=5000 --public-host=http://localhost:5000
+----
+
+=== Deintegrate my App
+The *-d* option allows you to undo an integration. The same rule applies to the port: if the port is not *4200*, it must be specified.
+
+.Deintegrate *my-app* running on port *12345*
+[source,bash]
+----
+./toggle-mfes.sh  -d my-app:12345
+----
+
+.Successful deintegration
+image::scripts/script_toggle-mfes.sh_deactivate.png[]
+
+
+=== Deintegrate ALL Apps
+The Traefik configurations are being cleaned up: All specific configuration files for the Microfrontend integration are being deleted.
+
+[source,bash]
+----
+./toggle-mfes.sh  -c
+----
+
+.Reset all Microfrontend configurations in Traefik
+image::scripts/script_toggle-mfes.sh_cleanup.png[]
+
+[CAUTION]
+====
+*Microfrontends integrated* using the methods described above *take priority* over those run via Docker Compose. If the microfrontends started with Docker Compose are needed again, the locally integrated microfrontends must first be deintegrated using the *-d* option.
+A failover mechanism is not implemented due to differing path reductions.
+====
+
+
+[#routing-and-prioritize]
+== Routing & Priorities
+
+As described earlier, Traefik is responsible for routing. Each route is assigned a *priority*, which Traefik derives by default from the length of the rule: the longer the rule, the higher the priority. To avoid routing collisions, the *local microfrontends are configured with a significantly higher priority*.
+
+This means you can run multiple microfrontends with the same routing rule in parallel and still control which microfrontend is used in OneCX. This is very useful if you want to use locally running microfrontends without having to stop the corresponding service in Docker Compose.
+
+The Traefik configuration generated when integrating a microfrontend (see above) sets a significantly higher priority for this route, so that the local microfrontend is used preferentially.
+
+
+=== Example: Prioritize local Microfrontend
+In this example, the OneCX Workspace microfrontend is running both in Docker Compose (Service: *onecx-workspace-ui*) and locally (Service: *local_workspace*). The local instance is used preferentially because it has a *higher* priority (*323*) than the Docker Compose instance (*52*).
+
+
+.Example routing for OneCX Workspace microservices
+image::scripts/script_toggle-mfes.sh_priotize-routes.png[]
+
+
+// https://onecx.github.io/docs/documentation/current/onecx-local-env/scripts/update-images.html
+= Update local Docker images
+
+To run a local OneCX instance, Docker images with the latest version are downloaded and used. Over time, these images become outdated, meaning that even if a newer version is available, the old version is still being used locally. Check versions with script xref:./check-images.adoc[check-images.sh].
+
+The *update-images.sh* script is used to renew local Docker images and removing orphaned images. It can be run from the root directory of the *onecx-local-env* repository.
+
+.Command to display the available options:
+[source,bash]
+----
+./update-images.sh -h
+----
+
+[TIP]
+====
+Before updating the images, it is recommended to check the current versions of the local Docker images using the script xref:./check-images.adoc[check-images.sh] and stopping the local OneCX instance using xref:./stop.adoc[stop-onecx.sh] to prevent potential issues with running containers during the update process. +
+Run the script with the parameter `*-c*` to clean up orphaned images - can be done in combination with updating.
+====
+
+
+== Available Options
+The script accepts several optional options to customize its behavior. Some options can be combined.
+
+The available options are:
+
+-a::
+Update all images, ignoring name filter (if option *-n* is also used). +
+If used in combination with *-c* then all orphaned images and stopped containers are removed.
+
+-c::
+Cleaned up orphaned images which are tagged with *<none>* or with status *Exited*. +
+Can be used in combination with *-a* (all images are affected) or with *-n* (only images matching the name filter are affected). +
+Basically, the deletion is only possible if the image is not in use. If so then stop the appropriate container first and try again.
+
+-h::
+Displays help information about the script and its available options. If used then all other options are ignored.
+
+-n <text>::
+Name filter, update images which have <text> into image name
+
+
+== Examples
+
+=== Update Traefik Image
+The Docker which have *traefik* in image name are pulled from remote registry and updated locally. In case some orphaned images are found then these are removed too.
+
+[source,bash]
+----
+./update-images.sh  -n traefik -c
+----
+
+.Successful update with name filter and cleanup
+image::scripts/script_update-images.sh_traefik-updated.png[]
+
+=== Cleanup only
+Started without any name filter will remove all orphaned images. No additional confirmation is required.
+
+.Excerpt from the list of orphaned images
+image::scripts/script_check-images.sh_none-images.png[]
+
+[source,bash]
+----
+./update-images.sh  -c
+----
+
+The deletion is only possible if the image is not in use. If so then stop the appropriate container first and try again.
+
+.Image deletion failed
+image::scripts/script_update-images.sh_rm-image-failed.png[]
+
+.Image deletion successful after stopping the container
+image::scripts/script_update-images.sh_rm-image-successful.png[]
+
+=== Update all images and cleanup
+With option *-a* all images are updated, ignoring name filter. With option *-c* all orphaned images are removed. No additional confirmation is required.
+
+[source,bash]
+----
+./update-images.sh  -a -c
+----
+
+
+
+Internal
+https://onecx.github.io/docs/documentation/current/onecx-local-env/internal/_onecx-env-sets.html
+
+.Excerpt from `versions/v2/compose.yaml`
+[source,yaml]
+----
+...
+x-bff-variables: &bff_environment
+  ONECX_PERMISSIONS_ENABLED: ${ONECX_PERMISSIONS_ENABLED}
+  ONECX_PERMISSIONS_CACHE_ENABLED: ${ONECX_PERMISSIONS_CACHE_ENABLED}
+  QUARKUS_OIDC_CLIENT_CLIENT_ID: ${ONECX_OIDC_CLIENT_CLIENT_ID}
+  QUARKUS_OIDC_CLIENT_CREDENTIALS_SECRET: ${ONECX_OIDC_CLIENT_S_E_C_R_E_T}
+  QUARKUS_OIDC_CLIENT_AUTH_SERVER_URL: ${ONECX_AUTH_SERVER_URL}
+  QUARKUS_OIDC_AUTH_SERVER_URL: ${ONECX_AUTH_SERVER_URL}
+  TKIT_LOG_JSON_ENABLED: ${JSON_LOGGER_ENABLED}
+  TKIT_SECURITY_AUTH_ENABLED: ${ONECX_SECURITY_AUTH_ENABLED}
+
+x-svc-variables: &svc_single_tenancy
+  QUARKUS_LOG_LEVEL: ${ONECX_LOG_LEVEL}
+  QUARKUS_OIDC_AUTH_SERVER_URL: ${ONECX_AUTH_SERVER_URL}
+  QUARKUS_OIDC_CLIENT_CLIENT_ID: ${ONECX_OIDC_CLIENT_CLIENT_ID}
+  QUARKUS_OIDC_CLIENT_CREDENTIALS_SECRET: ${ONECX_OIDC_CLIENT_S_E_C_R_E_T}
+  QUARKUS_OIDC_CLIENT_AUTH_SERVER_URL: ${ONECX_AUTH_SERVER_URL}
+  QUARKUS_DATASOURCE_JDBC_MIN_SIZE: ${ONECX_DATASOURCE_JDBC_MIN_SIZE}
+  QUARKUS_DATASOURCE_JDBC_MAX_SIZE: ${ONECX_DATASOURCE_JDBC_MAX_SIZE}
+  QUARKUS_DATASOURCE_JDBC_IDLE_REMOVAL_INTERVAL: ${ONECX_DATASOURCE_JDBC_IDLE_REMOVAL_INTERVAL}
+  TKIT_LOG_JSON_ENABLED: ${JSON_LOGGER_ENABLED}
+  TKIT_SECURITY_AUTH_ENABLED: ${ONECX_SECURITY_AUTH_ENABLED}
+  
+x-svc-multi_tenancy: &svc_multi_tenancy
+  <<: *svc_single_tenancy
+  QUARKUS_REST_CLIENT_ONECX_TENANT_URL: ${ONECX_REST_CLIENT_ONECX_TENANT_URL}
+  ONECX_TENANT_CACHE_ENABLED: ${ONECX_TENANT_CACHE_ENABLED}
+  TKIT_RS_CONTEXT_TENANT_ID_ENABLED: ${ONECX_RS_CONTEXT_TENANT_ID_ENABLED}
+  TKIT_RS_CONTEXT_TENANT_ID_MOCK_ENABLED: ${ONECX_RS_CONTEXT_TENANT_ID_MOCK_ENABLED}
+...
+----
+
+https://onecx.github.io/docs/documentation/current/onecx-local-env/internal/_onecx-env.html
+
+.Excerpt from `versions/v2/.env`
+[source,yaml]
+----
+########################################
+############## GENERAL #################
+########################################
+COMPOSE_PROJECT_NAME=onecx-local-env
+COMPOSE_CONVERT_WINDOWS_PATHS=1
+JSON_LOGGER_ENABLED=false
+
+########################################
+############# BASE Services ############
+########################################
+TRAEFIK=traefik:3.6.1
+POSTGRES=docker.io/library/postgres:15.5
+PGADMIN=dpage/pgadmin4:latest
+KEYCLOAK=quay.io/keycloak/keycloak:26.2.0
+
+########################################
+########## OneCX Variables #############
+########################################
+KC_REALM=onecx
+KC_APP_NAME=keycloak-app
+KC_URL=http://${KC_APP_NAME}
+KC_CLIENT_ID=onecx-shell-ui-client    # Client ID set in shell environment
+...
+----
+
+https://onecx.github.io/docs/documentation/current/onecx-local-env/internal/add-data.html
+
+= Add extra Data in OneCX Local Environment
+
+parking place
+
+
+[#adding-new-files]
+== Adding New Files - Guidelines here?
+
+To add new files to the `imports` directory, follow these guidelines:
+
+1. **Naming Conventions** - use consistent naming patterns based on the type of data being imported. The patterns are listed in the <<convention-and-file-list, Convention and file list>> section.
+
+2. **File Structure** - JSON files should adhere to the existing structure that is compliant with the respective service's API.
+
+3. **Script Updates** - If adding a new type of data, add new import script that includes new files and uses the appropriate service. Make sure to define the structure of the JSON files.
+
+4. **Testing** - Test the import process by running the relevant script and verifying the data in the environment.
+
+By adhering to these conventions, you can ensure consistency and maintainability in the OneCX Local Environment.
+
+https://onecx.github.io/docs/documentation/current/onecx-local-env/internal/custom-certificates.html
+
+= Adding Custom Certificates for Java Applications in Docker
+
+The use of custom certificates solves issues with Java applications running inside Docker containers that need to communicate over HTTPS with services using non-standard or self-signed certificates.
+
+== Why is this about?
+
+When running Java applications inside Docker containers, HTTPS connections often fail with errors like:
+
+.Excerpt from Docker logs of the affected Java service
+[source,text]
+----
+PKIX path building failed: unable to find valid certification path to requested target
+----
+
+=== Common Use Cases
+
+Corporate TLS Interception:: Tools like Zscaler or internal proxies re-sign certificates with a corporate CA.
+Self-Signed Certificates:: Internal services using self-signed certs.
+Private PKI:: Enterprise environments with custom root or intermediate CAs.
+
+=== Problems that arise
+
+* Outbound HTTPS calls fail (e.g., REST APIs, OAuth, external services).
+* Java throws any TLS/SSL exception e.g.  `SunCertPathBuilderException`.
+
+
+== Add Custom Certificates
+
+To resolve these issues, you need to add the required certificate to a Java Truststore used by your Java applications running inside Docker containers.
+
+=== 1. Get the Certificate
+
+Identify and export the necessary certificate from the target HTTPS service. +
+Open the HTTPS website (where the error occurs) in your browser (here exemplarily Chrome).
+
+Click the icon left on URL, then::
+
+. Click on *Connection is secure*
+. Click on *Certificate is valid*
+. Navigate to *Details* tab
+  .. Select the certificate with the target URL in *Certificate Hierarchy*
+  .. Click on *Export* and save as Base-64 encoded `.crt` file.
+
+[NOTE]
+====
+Alternatively, you can 
+
+* export the certificate using command line tools like `openssl` or `curl` or
+* use system-specific certificate management tools to export root and intermediate CAs.
+====
+
+Use the steps above to export all necessary certificates (root and intermediate CAs) that are required to establish a valid trust chain to the target HTTPS service.
+
+.Place the exported files in the *certs* folder inside of *onecx-local-env*
+[source, text]
+----
+certs/
+  ├── YourCertificate.crt
+  └── YourCertificate2.crt
+----
+
+=== 2. Create a Java Truststore
+
+Use the provided setup script to create or update a truststore with all your certificates.
+The script automatically imports all `.crt` and `.pem` files from the specified directory.
+In some cases, you will prompt to enter the root password for cleanup of existing entries.
+
+.Setup Truststore with password "trustjava"
+[source,bash]
+----
+./setup-truststore.sh
+----
+
+.Result: Truststore location
+[source]
+----
+certs/truststore.jks
+----
+
+=== 3. Verify the Truststore Contents
+
+Optionally, you can check the contents of the truststore by listing all the certificates it contains using the following command:
+
+.Verify Truststore Contents
+[source,bash]
+----
+keytool -list -keystore ./certs/truststore.jks -storepass trustjava
+----
+
+Expected output showing all imported certificates with their aliases.
+
+.Example Output with certificate for ollama.one-cx.org
+image::scripts/script_setup-truststore.sh_content.png[]
+
+
+=== 4. Use Truststore in AI Service
+
+Update your Docker Compose file to mount the truststore and configure Java to use it on the relevant services.
+
+.For Default JVM Applications
+[source,yaml]
+----
+services:
+  onecx-ai-provider-svc:
+    image: ${ONECX_AI_PROVIDER_SVC}
+    volumes:
+      - ./certs/truststore.jks:/opt/certs/truststore.jks:ro
+    environment:
+      JAVA_TOOL_OPTIONS: >-
+        -Djavax.net.ssl.trustStore=/opt/certs/truststore.jks
+        -Djavax.net.ssl.trustStorePassword=trustjava
+        -Djavax.net.ssl.trustStoreType=JKS
+----
+
+.For GraalVM Native Image Applications
+[source,yaml]
+----
+services:
+  onecx-ai-provider-svc:
+    image: ${ONECX_AI_PROVIDER_SVC}
+    volumes:
+      - ./certs/truststore.jks:/opt/certs/truststore.jks:ro
+    entrypoint: ["/work/application"]
+    command:
+    - "-Djavax.net.ssl.trustStore=/opt/certs/truststore.jks"
+    - "-Djavax.net.ssl.trustStorePassword=trustjava"
+    - "-Djavax.net.ssl.trustStoreType=JKS"
+----
+
+
+=== 5. Restart and Verify
+
+Verify the SSL/TLS connection works by triggering an HTTPS call and confirming no `PKIX path building failed` or any other TLS/SSL error appears.
+
+https://onecx.github.io/docs/documentation/current/onecx-local-env/internal/networking.html
+
+= Networking in OneCX Local Environment
+
+:different_ports: xref:documentation:onecx-docs-start/enable_hot_reload.adoc#note-different-ports
+:ole_setup: xref:onecx-local-env:setup.adoc
+
+This document explains how networking is configured and managed in the OneCX Local Environment.
+
+[#docker-resource-names]
+== Docker Resource Names
+To isolate the local OneCX environment from the host system and other Docker environments, Docker uses the project name *onecx-local-env*. This project name serves as a prefix for all created Docker resources (containers, networks, volumes), ensuring seamless communication between all services while minimizing disruptions and conflicts.
+
+The following Docker resource names and prefixes are used in the OneCX Local Environment:
+
+[horizontal]
+Project Name::      `onecx-local-env`
+Network Name::      `onecx-local-env_onecx`
+Container Prefix::  `onecx-local-env_`
+
+
+== Network Actors and Components
+The OneCX Local Environment uses a sophisticated networking setup that combines:
+
+* Traefik
+* Service Discovery and Routing
+* Docker Compose Network
+* Host file Configuration
+* Environment Configuration
+
+=== Traefik
+
+Traefik serves as the central entry point for all HTTP traffic in the OneCX environment. It acts as:
+
+[horizontal,labelwidth=20]
+Reverse Proxy::        Routes incoming requests to appropriate backend services
+Load Balancer::        Distributes traffic across service instances
+Service Discovery::    Automatically detects new services through Docker labels
+API Gateway::          Provides a single entry point for all microservices
+
+Configuration::        The Traefik configuration is split across multiple files: +
+* `init-data/traefik/base/traefik-conf.yml` +
+  Main configuration
+* `init-data/traefik/base/traefik-services.yml` +
+  Static service definitions for local development
+* `versions/<version>/compose.yaml` +
+  OneCX service registrations
+
+Traefik Settings::     `traefik-conf.yml`
+[source,yaml]
+----
+entryPoints:
+  web:
+    address: ":80"  # HTTP entry point
+providers:
+  docker:
+    endpoint: unix:///var/run/docker.sock
+  file:
+    directory: /etc/traefik/active
+    watch: true
+----
+
+Pls. aware the locations of Traefik configuration files are mapped as follows:
+----
+init-data/traefik/base/traefik-conf.yml  => /etc/traefik/traefik.yml
+init-data/traefik/active                 => /etc/traefik/active
+----
+
+=== Service Discovery
+
+Traefik Labels::
+
+Services register themselves with Traefik using Docker labels:
+
+.Traefik Label Patterns: SVC and BFF
+[source,yaml]
+----
+labels:
+  - "traefik.http.services.<service-name>.loadbalancer.server.port=8080"
+  - "traefik.http.routers.<service-name>.rule=Host(`<service-name>`)"
+----
+
+.Traefik Label Patterns: UI
+[source,yaml]
+----
+labels:
+  - "traefik.http.services.<ui-service-name>.loadbalancer.server.port=8080"
+  - "traefik.http.routers.<ui-service-name>.rule=Host(`onecx.localhost`) && PathPrefix(`/<app-path>/`)"
+----
+
+
+=== Service Routing Rules
+
+Different routing patterns are used for different service types:
+
+.Backend Services (BFF/SVC) and Infrastructure Services
+[source,yaml]
+----
+Host(`service-name`)
+----
+
+.Frontend Applications (UI)
+[source,yaml]
+----
+Host(`onecx.localhost`) && PathPrefix(`/app-path/`)
+----
+
+=== Port Mapping Strategy
+
+External Ports (Host → Container)::
+Key external ports exposed to the host:
++
+[cols="2,2,3"]
+|===
+| Service | Host Port | Purpose
+
+| Traefik HTTP
+| 80
+| Main HTTP entry point
+
+| Traefik Dashboard
+| 8082
+| Web UI for Traefik management
+
+| Keycloak
+| 8080
+| Identity and access management
+
+| PostgreSQL
+| 5432
+| Database direct access
+|===
+
+//
+Internal Ports (Container → Container):: Services communicate internally using standard ports: +
+
+[horizontal,indentSize=4]
+Web Services::          Port 8080 (Quarkus default)
+PostgreSQL::            Port 5432
+Frontend Applications:: Port 8080 (Nginx)
+
+
+=== Docker Compose Network
+Here only the v2 edition is described. The v1 edition is similar but uses the `example` network.
+
+Central configuration of the Docker Compose network is defined in `versions/v2/compose.yaml`
+
+.Network Configuration in Docker Compose
+image::onecx-network-in-docker-compose.png[width=300]
+
+The network alias used by the services is *onecx*. On project level the network is named *onecx-local-env_onecx*. This is also the name visible when executing `docker network ls`. See section at the top of this document about the xref:#docker-resource-names[Docker resource names].
+
+
+Network Features::
+[horizontal]
+Service-to-Service Communication:: Services can communicate using container names as hostnames
+Automatic DNS Resolution::         Docker provides built-in DNS for container name resolution
+Network Isolation::                Traffic is isolated from the host network and other Docker networks
+Network Communication Patterns::   Services communicate using these patterns
+
+[cols="2,3,3"]
+|===
+| Communication Type | Example | URL Pattern
+
+| Frontend to BFF
+| Shell UI → Shell BFF
+| `http://onecx-shell-bff:8080`
+
+| BFF to Service  
+| Shell BFF → Theme Service
+| `http://onecx-theme-svc:8080`
+
+| Service to Database
+| Theme Service → PostgreSQL
+| `jdbc:postgresql://postgresdb:5432/onecx_theme`
+
+| Service to Keycloak
+| Any Service → Keycloak
+| `http://keycloak-app:8080`
+|===
+
+
+=== Host File Configuration
+Check the {ole_setup}#hosts[hosts entries section] for detailed instructions.
+
+
+=== Environment Configuration
+
+Within the Docker Compose files (`compose.yaml`), several environment variables are used to manage settings for services:
+
+The source of the environment variables is located in the version folder: `versions/v2/.env`. +
+Here the link:https://raw.githubusercontent.com/onecx/onecx-local-env/refs/heads/main/versions/v2/.env[Link to GitHub source file].
+
+.Environment variables used in Docker Compose
+[%collapsible]
+====
+link:https://raw.githubusercontent.com/onecx/onecx-local-env/refs/heads/main/versions/v2/.env[Link to GitHub source file]
+
+include::./_onecx-env.adoc[]
+====
+
+.Environment variable sets defined in Docker Compose
+[%collapsible]
+====
+link:https://raw.githubusercontent.com/onecx/onecx-local-env/refs/heads/main/versions/v2/compose.yaml[Link to GitHub source file]
+
+include::./_onecx-env-sets.adoc[]
+====
+
+.Environment variable set use for BFF services
+[%collapsible]
+====
+[source,yaml]
+----
+  onecx-announcement-bff:
+    ...
+    environment:
+      <<: *bff_environment
+      ...
+----
+====
+
+.Environment variable set use for services with `multi-tenancy` awareness
+[%collapsible]
+====
+[source,yaml]
+----
+  onecx-announcement-svc:
+    ...
+    environment:
+      <<: *svc_multi_tenancy
+      ...
+----
+====
+
+.Environment variable set use for services with `single-tenancy` awareness
+[%collapsible]
+====
+[source,yaml]
+----
+  onecx-iam-svc:
+    ...
+    environment:
+      <<: *svc_single_tenancy
+      ...
+----
+====
+
+
+== Access Patterns
+The following access patterns illustrate how different components of the OneCX Local Environment can be accessed.
+
+OneCX Shell::    Main Entry Point
+Shell UI::
+  `http://onecx.localhost/onecx-shell/admin` +
+  All OneCX application UIs are accessed through the Shell workspace navigation
+Workspace Management UI via Shell::
+  `http://onecx.localhost/onecx-shell/admin/workspace`
+Workspace Microfrontend::
+  `http://onecx.localhost/mfe/workspace/`
+Workspace BFF::
+  `http://onecx.localhost/mfe/workspace/bff/`
+Workspace Service::
+  `http://onecx-workspace-svc:8080/`
+Traefik Routing Rule::  
+  `traefik.http.routers.onecx-workspace-ui.rule=Host(onecx.localhost) && PathPrefix(/mfe/*workspace*/)`
+
+See also the collection of utility services documented in xref:../utilities.adoc[Utilities].
+
+
+=== Microservice Communication
+Services within the OneCX Local Environment communicate using standard internal URLs based on container names and ports.
+
+[horizontal, labwidth=40]
+Frontend calls BFF::       `http://onecx.localhost/mfe/<app-path>/bff/<bff-resource>`
+BFF calls Service::        `http://<service-name>:8080/<svc-resource>`
+Service access database::  `jdbc:postgresql://postgresdb:5432/db_name`
+Service authenticate via:: `http://keycloak-app:8080`
+
+
+== Development Support
+The xref:../extend/extend.adoc[Extend OneCX] documentation describes how local running services are integrated into the OneCX Local Environment.
+
+
+== Security Considerations
+
+=== Network Isolation
+
+* Services are isolated within the Docker network
+* Only necessary ports are exposed to the host
+* Database is not directly accessible from outside (only via port 5432)
+
+=== Authentication Flow
+
+1. Browser → Traefik (onecx.localhost) → Frontend
+2. Frontend → Traefik → BFF Service
+3. BFF → Keycloak (authentication)
+4. BFF → Backend Services (with token)
+
+https://onecx.github.io/docs/documentation/current/onecx-local-env/internal/onecx-data.html
+
+= Initial Data in OneCX Local Environment
+
+The OneCX Local Environment contains data required for initial xref:../scripts/start.adoc[startup]. This data is usually automatically xref:../scripts/import.adoc[imported] after the services have started.
+
+This is an overview of the data and how its organized.
+
+
+.OneCX Initial Data
+[.stripes-even,cols="20,~,~"]
+|===
+| Data Type | Managed by | Description
+
+| Assignments
+| xref:documentation:onecx-permission:page$index.adoc[Permission Management]
+| Relationship between roles and permissions
+
+| Bookmarks
+| xref:documentation:onecx-bookmark:page$index.adoc[Bookmark Management]
+| Bookmarks for quick access to frequently used items
+
+| Parameters
+| xref:documentation:onecx-parameter:page$index.adoc[Parameter Management]
+| Used by some applications
+
+| Permissions
+| xref:documentation:onecx-permission:page$index.adoc[Permission Management]
+| Declared and used in applications.
+
+| Products (Applications)
+| xref:documentation:onecx-product-store:page$index.adoc[Application Store]
+| Application data (components, slots etc.)
+
+| Tenants
+| xref:documentation:onecx-tenant:page$index.adoc[Tenant Management]
+| Represents a customer or organizational unit using OneCX
+
+| Themes
+| xref:documentation:onecx-theme:page$index.adoc[Theme Management]
+| Customizing the look and feel of OneCX for a tenant
+
+| Workspaces
+| xref:documentation:onecx-workspace:page$index.adoc[Workspace Management]
+| Customizing the working areas for users
+
+| AI
+| AI Services
+| Configuration and data for AI Chat functionalities
+|===
+
+
+== How the Data are organized and imported
+The directory *onecx-data* in the *onecx-local-env* repository contains all data files and scripts needed to import data into the OneCX Local Environment.
+
+The xref:../scripts/import.adoc[import-onecx.sh] script is used to import data needed by the OneCX services. It can be run from the root directory of the *onecx-local-env* repository.
+It starts several scripts that import data for the different services. All data files are in JSON format and usually related to a tenant or an application.
+
+The import scripts are using *node.js* and *jq* for reading the data, split them in batches and call the respective service APIs to import the data.
+Each script is responsible for importing a specific type of data, e.g. workspaces, themes, permissions, etc.
+
+.Organization of Initial Data
+image::onecx-data-structure.png[OneCX Data Structure,alt="OneCX Data Structure",width="300"]
+
+https://onecx.github.io/docs/documentation/current/onecx-local-env/internal/profiles.html
+
+= Docker Compose Profiles in OneCX Local Environment
+
+{docker_compose_profiles_link} allow you to define different sets of services and configurations. This is particularly useful, where you might want to run only a subset of services for specific scenarios.
+
+However, this concept has its limitations. While it is well suited for starting subsets of services, it is not equally suitable for terminating these subsets.
+  
+
+== Used Compose Profiles
+
+The OneCX local environment uses the following Docker Compose profiles, which are defined in the *compose.yml* file of version 2.
+
+base::
+The *base* profile includes the essential services required to run the OneCX Local Environment.
++
+It is useful for scenarios where you want to run a minimal setup without additional features or services.
+
+all::
+The *all* profile includes almost all available services in the OneCX Local Environment. +
+Excepted are services that may require additional resources or are not commonly used in standard development scenarios.
++
+This profile is ideal for comprehensive testing or development scenarios where you need access to all common features and services provided by OneCX.
+
+data-import::
+The *data-import* profile is a specific one that includes services required for importing data into the OneCX Local Environment. +
+This profile is useful when you need to set up or refresh the environment with specific datasets without starting all services.
+
+https://onecx.github.io/docs/documentation/current/onecx-local-env/internal/utils.html
+
+= Utilities used in OneCX Local Environment
+
+include::../utilities.adoc[]

@@ -1,0 +1,105 @@
+One Question so the the deploer agents rant it Fo
+followed the comman commad (PS: i have also downloaded the repo wrom which the command are ran `.0_onecx-local-env-cli` ) which created the files
+then alsofollowed the istruction which were given based on MODE A or MODE B
+!st tell changes that this commad made to existing files and created new files 
+are this files used if yes for what and where  i know 
+Tell we the purpose of this each file what are they and why are they
+        onecx-book-catalog.compose.yaml
+        init-data/traefik/active/bookCatalog_4200.yml
+        onecx-data/permission-assignment/onecx-book-catalog.json
+        onecx-data/permission/onecx-book-catalog_onecx-book-catalog-ui.json
+        onecx-data/product-store/microfrontends/onecx-book-catalog_book-catalog_main.json
+        onecx-data/product-store/microservices/onecx-book-catalog_onecx-book-catalog-ui.json
+        onecx-data/product-store/products/onecx-book-catalog.json
+
+
+From my side i did ran
+- ./stop-onecx.sh -p all
+- ./start-onecx.sh -p all  (this also runs the ./import-onecx.sh)
+
+After this i could see the application in product store. but faced following issues
+
+
+In HOT_RELOAD And i feel same case would be in image
+The thing is the was their due to `init-data/traefik/active/bookCatalog_4200.yml` i was able to see the `http://onecx.localhost/mfe/bookCatalog/remoteEntry.js` the json
+But The following was not happening
+- The application was not added to the workspace ie not the admin or user 
+    why did this happen was anything missed
+    How did you resolve this (I think you made some injection in the DB)? this should not be the 1st choice
+    Please tell if something was wrong in the local env or .0_onecx-local-env-cli or the current set yp
+    if this is the only way then okay but this need to be updated in the agents-deploer
+- Once the appilication was added to workspace the menu entry was not seen
+    Although i think we ran commands for this which did something why was this not hapenning
+    why did this happen was anything missed
+    How did you resolve this (I think you made some injection in the DB)? this should not be the 1st choice
+    Please tell if something was wrong in the local env or .0_onecx-local-env-cli or the current set yp
+    if this is the only way then okay but this need to be updated in the agents-deploer
+- When the menu entry was added the ui was not seen still showed blank screen
+    why did this happen was anything missed
+    How did you resolve this (I think you cahnged the path /book-c)? but where did book-c came from and why was it removed then? 
+    Please tell if something was wrong in the local env or .0_onecx-local-env-cli or the current set yp
+    if this is the only way then okay but this need to be updated in the agents-deploer
+- When the ui was seen we were not having permissions to see the application in the menu entry
+    why did this happen was anything missed
+    How did you resolve this (I think you made some injection in the DB)? this should not be the 1st choice
+    Please tell if something was wrong in the local env or .0_onecx-local-env-cli or the current set yp
+    if this is the only way then okay but this need to be updated in the agents-deploer
+
+
+
+ALso please then update in the  `/root/onecx/dev-new/onecx-local-env/.0_agents-deployer` accordingly so next time this issue doesnt occur
+Before making changes make sure you have a clear context of both files
+[deploer-agent](/.0_agents-deployer/.github/agents/deployer.agent.md) -> Runs the process using the skills
+[agent-skills](/.0_agents-deployer/.github/skills/onecx-local-env-cli/SKILL.md)  -> Skills used by the deployer agent
+
+- You should be strictly specific to the point for instructions and steps in agents
+- You should not write reduandant steps or instructions
+- Note if you need a script create one in the `.0_agents-deployer/.github/skills/onecx-local-env-cli.scripts/<script_name>` and call it in the agent file
+
+
+
+STRICTLY also make sure to document this
+- why did this issue still happens were the command current step not enuugh we have just this steps in our official  [docs](/root/onecx/dev-new/onecx-local-env/.Ps-Docs/compiled-docs) so it should have worked for now 
+- ISSUES
+- YOUR ANALYSIS
+- How YOU RESOLVE THIS
+- CHANGES YOU MADE (if any) and why
+- - Core Issue with `0_onecx-local-env-cli` and current setup repo if any which caused
+- Suggestion to resolve this issue (suggest changes in the `0_onecx-local-env-cli` and current setup repo if any to avoid this issue in future) , How and why was this solution what did you observe 
+- dont create multiple docs single doc to the point but should explain all
+
+
+
+Context;
+`./` currrent directory is the onecx-local-env setup directory
+
+Following are not the part of this i have provided them so you could have the context for debug
+
+`.0_agents-deployer` This is the agent file which i am running which has 
+[deploer-agent](/.0_agents-deployer/.github/agents/deployer.agent.md) -> Runs the process using the skills
+[agent-skills](/.0_agents-deployer/.github/skills/onecx-local-env-cli/SKILL.md)  -> Skills used by the deployer agent
+
+The idea is that the when we run this deploer agents with any mode ie
+- `TEST_MODE` controls the deployment mode:
+  - `HOT_RELOAD` → use Mode A (Hot Reload)
+  - `DOCKER_IMAGE` → use Mode B (Docker Container)
+
+It should follow the command commands and the Mode Commands and the ui is expedcted to be running when the user navigates to it through the menu entry created 
+
+`.0_onecx-local-env-cli` This are the command which are ran by agnets 
+
+
+
+RUle:
+You are only allowed to make changes to the files created /modified by cli and `.0_agents-deployer` 
+also make sure to adapt the fixes in the `.0_agents-deployer` so that next time when we run the deploer agent this issue should not occur and the process should be smooth without any manual intervention after the deployment process is completed
+You should suggest the issues and solution for other but for now we cant wait to get the `.0_onecx-local-env-cli` and the current repo to merge and test the changes 
+For now we want the deploer to run and ui to be up and running without any manual intervention after the deployment process is completed
+
+
+
+
+
+By the permission are still not thei r i am seeing
+Unauthorized
+Sorry, you do not have the permission required to view this page. Missing permission key: 'BOOK#SEARCH'

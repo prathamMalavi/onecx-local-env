@@ -12,5 +12,6 @@
   "tagName": "app3-ocx-test-component-21",
   "type": "MODULE",
   "deprecated": false,
-  "undeployed": false
+  "undeployed": false,
+  "shareScope": "angular_21"
 }

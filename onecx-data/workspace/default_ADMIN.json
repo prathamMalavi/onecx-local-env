@@ -294,6 +294,16 @@
               "basePath": "/"
             }
           ]
+        },
+        {
+          "productName": "app1-onecx-angular-20-module-test",
+          "baseUrl": "/app1-angular-20-test",
+          "microfrontends": [
+            {
+              "appId": "app1-angular-20-ui",
+              "basePath": "/"
+            }
+          ]
         }
       ],
       "slots": [
@@ -1234,6 +1244,23 @@
                   "i18n": {
                     "en": "App4 Angular 21 4028",
                     "de": "App4 Angular 21 4028"
+                  },
+                  "roles": ["onecx-admin"],
+                  "children": []
+                },
+                {
+                  "key": "APP1_ANGULAR_20_TEST",
+                  "name": "App1 Angular 20 4030",
+                  "url": "/app1-angular-20-test/",
+                  "applicationId": "app1-angular-20-ui",
+                  "disabled": false,
+                  "position": 5,
+                  "badge": "star-fill",
+                  "external": false,
+                  "target": "_self",
+                  "i18n": {
+                    "en": "App1 Angular 20 4030",
+                    "de": "App1 Angular 20 4030"
                   },
                   "roles": ["onecx-admin"],
                   "children": []

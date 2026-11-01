@@ -1,10 +1,10 @@
 {
   "version": "xxx",
-  "description": "App4 Angular-21 4028",
+  "description": "App1 Angular-20 4030",
   "imageUrl": null,
   "iconName": "star",
-  "displayName": "App4 Angular-21 4028",
-  "basePath": "/app4-angular-21-test",
+  "displayName": "App1 Angular-20 4030",
+  "basePath": "/app1-angular-20-test",
   "classifications": [],
   "multitenancy": true,
   "undeployed": false

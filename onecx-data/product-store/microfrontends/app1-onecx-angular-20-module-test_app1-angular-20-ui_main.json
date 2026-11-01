@@ -1,0 +1,16 @@
+{
+  "appVersion": "xxx",
+  "appName": "App1 Angular-20 4030 UI",
+  "description": "App1 Angular-20 4030 UI",
+  "contact": "onecx@1000kit.org",
+  "remoteBaseUrl": "http://localhost:4030/",
+  "remoteEntry": "http://localhost:4030/remoteEntry.js",
+  "note": "Imported MFE",
+  "exposedModule": "./RemoteModule",
+  "technology": "WEBCOMPONENTMODULE",
+  "remoteName": "app1-ocx-test-component-20",
+  "tagName": "app1-ocx-test-component-20",
+  "type": "MODULE",
+  "deprecated": false,
+  "undeployed": false
+}

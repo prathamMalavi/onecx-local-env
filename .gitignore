@@ -18,3 +18,5 @@ ai-config*
 # A_Extras
 # .0_agents-deployer/
 .0_angular-21-test-apps/
+.0_angular-20-test-apps/
+.0_angular-20-standalone-apps/

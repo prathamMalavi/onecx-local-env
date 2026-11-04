@@ -40,3 +40,6 @@ docker exec postgresdb psql -U postgres -d onecx_theme -c "DELETE FROM public.th
 "overrides":[{"type":"CSS","value":"p-toast { z-index: 1102; }"}],
 
 "overrides":[{"type":"CSS","value":"p-toast { z-index: 1102; }"}],"operator":true,"
+
+
+22
